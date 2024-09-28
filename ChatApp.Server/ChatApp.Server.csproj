@@ -35,7 +35,18 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Controllers\" />
+    <Folder Include="Core\Interfaces\" />
+    <Folder Include="Core\Helpers\" />
+    <Folder Include="Core\Services\" />
+    <Folder Include="Data\Migrations\" />
+    <Folder Include="Data\Contexts\" />
+    <Folder Include="Data\Interfaces\" />
+    <Folder Include="Data\Repositories\" />
+    <Folder Include="Domain\DTO\" />
+    <Folder Include="Domain\Entities\" />
+    <Folder Include="Domain\Identity\" />
+    <Folder Include="Domain\Profiles\" />
+    <Folder Include="Hubs\" />
   </ItemGroup>
 
 </Project>
