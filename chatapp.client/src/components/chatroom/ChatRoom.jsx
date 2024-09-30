@@ -126,11 +126,22 @@ const ChatRoom = () => {
                             </span>
                         </div>
                     </div>
+                    
+                    
                 </div>
                 <div className="chatbox-message-bottom">
+                    <div className="chatbox-message-typing">
+                        <div className="typing">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                        <span>John</span> {/* {users.typing.map((user) => {})}  */}
+                        <span>&nbsp;is typing...</span>
+                    </div>
                     <form action="#" className="chatbox-message-form">
-                        <textarea cols="200" rows="1" placeholder="Type message..." className="chatbox-message-input"></textarea>
-                        <button type="submit" className="chatbox-message-submit">Send</button>
+                        <textarea cols="200" rows="1" placeholder="Message" className="chatbox-message-input"></textarea>
+                        <button type="button" className="chatbox-message-submit">Send</button>
                     </form>
                 </div>
             </div>

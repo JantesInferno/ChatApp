@@ -10,6 +10,7 @@
 }
 
 .chatbox-wrapper {
+    margin: 0;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -37,6 +38,7 @@
 }
 
 .chatbox-message-wrapper {
+    margin: 0;
     width: 100%;
     border-radius: 0.5rem;
     overflow: hidden;
@@ -72,7 +74,7 @@
 
 .chatbox-message-content {
     background: var(--dark);
-    padding: 1.5rem 1.5rem 2rem 1.5rem;
+    padding: 1.5rem 1.5rem 0rem 1.5rem;
     display: flex;
     flex-direction: column;
     grid-row-gap: 0rem;
@@ -81,24 +83,27 @@
 }
 
 .chatbox-message-typing {
-  display: flex;
-  justify-content: flex-start;
-  gap: 0.5rem;
-  width: 3rem;
+    display: flex;
+    justify-content: flex-start;
+    color: var(--grey-d-3);
+    font-size: 0.9rem;
+    background: #191919;
+    padding: 0.5rem 1rem 0.5rem 1rem;
+    width: 100%;
+    margin-left: -1rem;
+    margin-top: -0.7rem;
+    margin-bottom: 0.7rem;
 }
 
 .chatbox-message-typing-image {
-  height: 1.5rem;
+    height: 1.5rem;
 }
 
-.chatbox-message-item {
-  width: 90%;
-  padding: 1rem;
-}
 
 .chatbox-message-sender {
     text-align: left;
     color: var(--white);
+    width: auto;
 }
 
 .chatbox-message-item {
@@ -106,39 +111,38 @@
     flex-direction: column;
     justify-self: center;
     width: auto;
+    padding: 1rem;
 }
 
 .chatbox-message-item-text {
     text-align: left;
+    font-size: 0.9rem;
 }
 
 .chatbox-message-item.sent {
+    align-self: flex-start;
     background: #444;
     color: var(--white);
     border-radius: 0rem 0.75rem 0.75rem 0.75rem;
 }
 
 .chatbox-message-item.received {
-  align-self: center;
-  background: var(--white);
-  color: var(--dark);
-  border-radius: 0 0.75rem 0.75rem 0.75rem;
-  box-shadow: 0.25rem 0.25rem 1.5rem rgba(0, 0, 0, 0.05);
+    align-self: center;
 }
 
 .chatbox-message-item.received.loading {
-  align-self: flex-start;
-  display: flex;
-  align-items: center;
-  width: 6rem;
-  height: 2.5rem;
-  padding: 0;
+    align-self: flex-start;
+    display: flex;
+    align-items: center;
+    height: 2.5rem;
+    padding: 0;
+    margin-left: 1rem;
 }
 
 .chatbox-message-item-time {
-  float: right;
-  font-size: 0.75rem;
-  margin-top: 0.5rem;
+     margin-left: 0.5rem;
+     font-size: 0.7rem;
+     color: var(--grey-d-3)
 }
 
 .chatbox-message-item-time.bot {
@@ -165,16 +169,17 @@
 
 .chatbox-message-bottom {
     background: #111;
-    padding: 0.75rem 1.5rem;
+    padding: 0.75rem 1rem;
 }
 
 .chatbox-message-form {
     display: flex;
     align-items: center;
-    background: #333;
+    background: #191919;
     color: var(--white);
     border-radius: 0.5rem;
-    padding: 0.5rem 1.25rem;
+    padding: 0.5rem 0.5rem 0.5rem 1.25rem;
+    margin: 0 0.25rem;
 }
 
 .chatbox-message-input {
@@ -194,8 +199,8 @@
 .chatbox-message-submit {
     float: right;
     font-size: 1rem;
-    color: var(--dark);
-    background: var(--white);
+    color: var(--white);
+    background: var(--blue);
     border: none;
     outline: none;
     display: flex;
@@ -211,25 +216,26 @@
 
 .typing {
   position: relative;
+  margin-right: 1.75rem;
 }
 .typing span {
   content: "";
   animation: blink 1.5s infinite;
   animation-fill-mode: both;
-  height: 0.4rem;
-  width: 0.4rem;
-  background: #3b5998;
+  height: 0.3rem;
+  width: 0.3rem;
+  background: var(--white);
   position: absolute;
   border-radius: 50%;
   bottom: 0.5rem;
 }
 .typing span:nth-child(2) {
   animation-delay: 0.2s;
-  margin-left: 0.6rem;
+  margin-left: 0.5rem;
 }
 .typing span:nth-child(3) {
   animation-delay: 0.4s;
-  margin-left: 1.2rem;
+  margin-left: 1rem;
 }
 
 @keyframes blink {
