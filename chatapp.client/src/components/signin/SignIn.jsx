@@ -2,7 +2,6 @@
 import { Button, TextField, Typography } from '@mui/material';
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import './signin.css';
 
 const SignIn = () => {
     const apiUrl = import.meta.env.VITE_REACT_API_URL;
@@ -22,6 +21,7 @@ const SignIn = () => {
         setIsError(false);
 
         let valid = true;
+        // validate password
         states.map(state => {
             if (state.value == "" || (state.type === 'password' && state.value.length < 6)) {
                 setIsError(true);
@@ -32,32 +32,27 @@ const SignIn = () => {
         if (valid) {
             const res = await signInUser(username.value, password.value);
 
-            
+            // check http status code and act accordingly, setting AuthError for ui feedback
             if (res == 401) {
                 setAuthError('Invalid username/password.');
-                console.log(res);
             }
             else if (res == 400) {
                 setAuthError('Fill in all input fields.');
-                console.log(res);
             }
-            else if (res == 200 || res.username) {
+            else if (res.token) {
                 setPassword({ value: '' });
                 setUsername({ value: '' });
                 sessionStorage.setItem('token', res.token);
-                sessionStorage.setItem('username', res.username);
                 navigate("/chat");
             }
             else {
                 setAuthError('An unexpected error occurred. Please try again later.');
-                console.log(res);
             }
         }
         e.preventDefault();
     }
 
     const signInUser = async (username, password) => {
-
         const url = `${apiUrl}/api/signin`;
 
         const result = await fetch(url, {
@@ -79,7 +74,7 @@ const SignIn = () => {
                 return 500;
             });
 
-        return result.username ? result : 200;
+        return result;
     }
 
     return (

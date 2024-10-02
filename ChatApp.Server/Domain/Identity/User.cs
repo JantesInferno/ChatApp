@@ -13,6 +13,6 @@ namespace ChatApp.Server.Domain.Identity
 
         public User() { }
 
-        public List<ChatRoom> ChatRooms { get; set; } = null!;
+        public virtual List<ChatRoom> ChatRooms { get; set; } = null!;
     }
 }

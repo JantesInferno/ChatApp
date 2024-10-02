@@ -3,6 +3,8 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 
+// ******************************** TODO ********************************
+// Confirm password
 
 const SignUp = () => {
     const apiUrl = import.meta.env.VITE_REACT_API_URL;
@@ -22,6 +24,7 @@ const SignUp = () => {
         setIsError(false);
 
         let valid = true;
+        // validate password
         states.map(state => {
             if (state.value == "" || (state.type === 'password' && state.value.length < 6)) {
                 setIsError(true);
@@ -31,6 +34,8 @@ const SignUp = () => {
 
         if (valid) {
             const result = await createUserAccount(username.value, password.value);
+
+            // check http status code and act accordingly, setting AuthError for ui feedback
             if (result == 400) {
                 setAuthError('Username must be unique.');
             }
@@ -49,7 +54,6 @@ const SignUp = () => {
     }
 
     const createUserAccount = async (username, password) => {
-
         const url = `${apiUrl}/api/signup`;
 
         const result = await fetch(url, {
@@ -75,7 +79,6 @@ const SignUp = () => {
 
         return result;
     }
-
 
 
     return (
@@ -113,7 +116,7 @@ const SignUp = () => {
                 <Button type='button' variant='body2' sx={{ width: '60%', color: '#FFF', bgcolor: 'primary.main', ':hover': { bgcolor: '#143954' } }}
                     onClick={createUser}
                 >
-                    Create
+                    Sign up
                 </Button>
             </form>
         </>

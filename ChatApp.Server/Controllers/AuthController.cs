@@ -44,14 +44,16 @@ namespace ChatApp.Server.Controllers
 
             if (result.Succeeded)
             {
-                var user = await _userManager.FindByNameAsync(userDto.Username);
+                //var user = await _userManager.FindByNameAsync(userDto.Username);
+                var user = await _userManager.Users
+                                    .Include(x => x.ChatRooms)
+                                    .SingleAsync(x => x.UserName == userDto.Username);
 
                 if (user != null)
                 {
+                    // Seed and manually assign chat room
+
                     var chatRoom = await _context.ChatRooms.FirstOrDefaultAsync(room => room.Name == "Global chat");
-                    //var messages = _context.ChatMessages.ToList();
-                    //chatRoom.ChatMessages.Clear();
-                    //await _context.SaveChangesAsync();
 
                     if (chatRoom == null)
                     {
@@ -71,26 +73,21 @@ namespace ChatApp.Server.Controllers
                         await _context.SaveChangesAsync();
                     }
 
+                    // Arrange response with token
+
+                    // ******************************** TODO ********************************
+                    // Remove chat room data from response
                     var response = _mapper.Map<UserDTO>(user);
                     var token = GenerateToken(user!);
                     response.Token = token;
 
+                    _logger.LogInformation($"User {user.UserName} has logged in.");
+
                     return new OkObjectResult(response);
                 }
-
-                //var chatRooms = new List<ChatRoom>();
-                //chatRooms.Add(new ChatRoom("Global chat"));
-                //user.ChatRooms = chatRooms;
-                //await _userManager.UpdateAsync(user);
-                //var response = _mapper.Map<UserDTO>(user);
-                //var token = GenerateToken(user!);
-                //response.Token = token;
-
-                //return new OkObjectResult(response);
             }
 
             return new UnauthorizedObjectResult("Invalid username/password");
-
         }
 
         [Route("/api/signup")]
@@ -102,47 +99,12 @@ namespace ChatApp.Server.Controllers
 
             if (result.Succeeded)
             {
+                _logger.LogInformation($"Account created for user {userDto.Username}.");
                 return Ok();
             }
 
             return BadRequest();
         }
-
-        //[Route("/api/signout")]
-        //[HttpPost]
-        //[AllowAnonymous]
-        //public async Task<IResult> SignOut()
-        //{
-        //    //if (User.Identity == null)
-        //    //    return Results.Problem("Du är inte inloggad", statusCode: 401);
-
-        //    //var result = await _userService.LogOut(User.Identity);
-
-        //    //if (!result.Success)
-        //    //    return Results.Problem(result.ErrorMessage, statusCode: 401);
-
-        //    //return Results.Ok(result.Data);
-        //}
-
-        //public async Task<string> GetUserIdFromClaims(IIdentity identity)
-        //{
-        //    var claimsIdentity = identity as ClaimsIdentity;
-        //    string userIdClaim = string.Empty;
-
-        //    if (claimsIdentity != null)
-        //    {
-        //        await Task.Run(() =>
-        //        {
-        //            IEnumerable<Claim> claims = claimsIdentity.Claims;
-
-        //            userIdClaim = claims.FirstOrDefault(x => x.Type == ClaimTypes.NameIdentifier).Value;
-        //        });
-        //    }
-
-        //    return userIdClaim;
-        //}
-
-
 
         public string GenerateToken(User user)
         {

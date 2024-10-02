@@ -1,17 +1,17 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable react/prop-types */
 import './chatroom.css';
 import { useState, useEffect } from 'react';
-
 
 const ChatRoom = ({ connection, chatRoom }) => {
     const [chatMessages, setChatMessages] = useState([]);
     const [newMessage, setNewMessage] = useState("");
     const [usersTyping, setUsersTyping] = useState([]);
 
-
+    // send message to SignalR hub
     const sendMessage = async () => {
         if (newMessage.trim() === "") {
-            return; // Prevent sending empty messages
+            return;
         }
         try {
             await connection.invoke("SendMessage", newMessage, chatRoom.Name);
@@ -22,11 +22,13 @@ const ChatRoom = ({ connection, chatRoom }) => {
         }
     }
 
+    // handle form submit by clicking button
     const handleSubmit = (e) => {
         e.preventDefault();
         sendMessage();
     }
 
+    // handle form submit by pressing Enter
     const handleKeyPress = (e) => {
         if (e.key === 'Enter') {
             e.preventDefault();
@@ -34,17 +36,17 @@ const ChatRoom = ({ connection, chatRoom }) => {
         }
     }
 
+    // handle current message and ping SignalR hub indicating typing status
     const handleOnChange = (e) => {
-        if (e.target.value) {
+        if (e.target.value)
             connection.invoke("ActivateTypingIndicator", chatRoom.Name);
-        }
-        else {
+        else 
             connection.invoke("DeactivateTypingIndicator", chatRoom.Name);
-        }
 
         setNewMessage(e.target.value);
     }
 
+    // escape html characters
     const sanitizeHtml = (text) => {
         return text.replace(/&/g, "&amp;")
                    .replace(/</g, "&lt;")
@@ -53,6 +55,7 @@ const ChatRoom = ({ connection, chatRoom }) => {
                    .replace(/'/g, "&#039;");
     }
 
+    // check if message's date is the current date
     function sameDay(d1) {
         let d2 = new Date();
         return d1.getFullYear() === d2.getFullYear() &&
@@ -60,11 +63,13 @@ const ChatRoom = ({ connection, chatRoom }) => {
             d1.getDate() === d2.getDate();
     }
 
+    // handle duplicate/remove users in array
     const filterDuplicateUsers = (user) => {
         let newArr = usersTyping.filter(x => x !== user)
         setUsersTyping(newArr);
     }
 
+    // SignalR methods for receiving data
     useEffect(() => {
         connection.on("ReceiveTypingIndicatorOn", (user) => {
             filterDuplicateUsers(user);
@@ -77,14 +82,12 @@ const ChatRoom = ({ connection, chatRoom }) => {
 
         connection.on("ReceiveChatMessage", (msg) => {
             let obj = JSON.parse(msg);
-            var date = new Date(Date.parse(obj.DateTime));
+            let date = new Date(Date.parse(obj.DateTime));
 
-            if (sameDay(date)) {
+            if (sameDay(date))
                 date = `today at ${(date.getHours() < 10 ? '0' : '') + date.getHours()}:${(date.getMinutes() < 10 ? '0' : '') + date.getMinutes()}`;
-            }
-            else {
+            else 
                 date = obj.ShortDate;
-            }
 
             obj.DateTime = date;
 
@@ -92,25 +95,24 @@ const ChatRoom = ({ connection, chatRoom }) => {
                 let newChatMessages = prevChatMessages.filter(x => x.Id !== obj.Id);
                 return [...newChatMessages, obj];
             });
-
         });
-        
     }, [connection]);
 
+    // automatically scroll down chat to last message
     useEffect(() => {
         const chatboxMessageWrapper = document.querySelector('.chatbox-message-content');
         chatboxMessageWrapper.scrollTo(0, chatboxMessageWrapper.scrollHeight);
     }, [newMessage, chatMessages]);
 
+    // populate chat with messages from db
     useEffect(() => {
-        if (chatRoom.ChatMessages && chatMessages.length == 0) {
-            setChatMessages(chatRoom.ChatMessages);
+        if (chatRoom) {
+            setChatMessages(chatRoom.ChatMessages || []);
         }
-    }, []);
+    }, [chatRoom]);
 
 
     
-
     return (
         <div className="chatbox-wrapper">
             <div className="chatbox-message-wrapper">

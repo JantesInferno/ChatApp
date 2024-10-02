@@ -1,5 +1,7 @@
 ﻿using ChatApp.Server.Data.Contexts;
+using ChatApp.Server.Domain.DTO;
 using ChatApp.Server.Domain.Entities;
+using ChatApp.Server.Domain.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
@@ -25,21 +27,31 @@ namespace ChatApp.Server.Hubs
 
             _logger.LogInformation($"User {username} has connected.");
 
-            List<ChatRoom> rooms = _context.Users.Include("ChatRooms").FirstOrDefault(x => x.UserName == username)!.ChatRooms.ToList();
-            var messages = _context.ChatRooms.Include("ChatMessages").FirstOrDefault(x => x.Name == rooms[0].Name);
+            await FetchChatData();
 
-            if (rooms != null)
+            await Clients.All.SendAsync("ReceiveMessage", $"{username} has joined the chat.");
+        }
+
+        public async Task FetchChatData()
+        {
+            var username = Context.User!.Identity!.Name;
+
+            _logger.LogInformation($"Fetching chat data for {username}.");
+
+            User user = await _context.Users.Include(u => u.ChatRooms)
+                                            .ThenInclude(cr => cr.ChatMessages)
+                                            .SingleAsync(u => u.UserName == username);
+
+            if (user.ChatRooms != null)
             {
-                rooms.ForEach(x =>
+                user.ChatRooms.ForEach(x =>
                 {
                     Groups.AddToGroupAsync(Context.ConnectionId, x.Name);
                 });
 
-                var json = JsonConvert.SerializeObject(rooms);
+                var json = JsonConvert.SerializeObject(user.ChatRooms);
                 await Clients.Client(Context.ConnectionId).SendAsync("ReceiveData", json);
             }
-
-            await Clients.All.SendAsync("ReceiveMessage", $"{username} has joined the chat.");
         }
 
         public async Task SendMessage(string message, string chatRoom)

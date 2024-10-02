@@ -13,6 +13,6 @@ namespace ChatApp.Server.Domain.Entities
 
         public string Name { get; set; } = string.Empty;
 
-        public List<ChatMessage> ChatMessages { get; set; } = null!;
+        public virtual List<ChatMessage> ChatMessages { get; set; } = null!;
     }
 }
