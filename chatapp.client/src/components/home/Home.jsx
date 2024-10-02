@@ -1,18 +1,16 @@
+/* eslint-disable react/prop-types */
 import SignIn from "../signin/SignIn";
-import { useState } from 'react';
-
+import ChatOverview from "../chatoverview/ChatOverview";
 
 
 const Home = () => {
 
-    const [user, setUser] = useState(false);
-
     return (
         <>
-            {(!user
+            {!sessionStorage.token
                 ? <SignIn />
-                : null // <ChatOverview chatRooms={user.chatRooms} />
-            )}
+                : <ChatOverview />
+            }
         </>
     )
 }

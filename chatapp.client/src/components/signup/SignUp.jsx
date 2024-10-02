@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 
 
 const SignUp = () => {
+    const apiUrl = import.meta.env.VITE_REACT_API_URL;
 
     const [username, setUsername] = useState({ value: '' });
     const [password, setPassword] = useState({ value: '' });
@@ -29,7 +30,7 @@ const SignUp = () => {
         })
 
         if (valid) {
-            const result = 400 //await createUserAccount(name.value, username.value, email.value, password.value, address.value, city.value);
+            const result = await createUserAccount(username.value, password.value);
             if (result == 400) {
                 setAuthError('Username must be unique.');
             }
@@ -45,7 +46,34 @@ const SignUp = () => {
         else {
             e.preventDefault();
         }
+    }
 
+    const createUserAccount = async (username, password) => {
+
+        const url = `${apiUrl}/api/signup`;
+
+        const result = await fetch(url, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+                "username": username,
+                "password": password
+            })
+        })
+            .then(response => {
+                if (response.ok)
+                    return 200;
+                else
+                    return response.status;
+            })
+            .catch(error => {
+                console.log(error);
+                return 500;
+            });
+
+        return result;
     }
 
 

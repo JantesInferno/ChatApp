@@ -1,9 +1,11 @@
+/* eslint-disable no-unused-vars */
 import { Button, TextField, Typography } from '@mui/material';
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import './signin.css';
 
 const SignIn = () => {
+    const apiUrl = import.meta.env.VITE_REACT_API_URL;
 
     const [username, setUsername] = useState({ value: '' });
     const [password, setPassword] = useState({ value: '' });
@@ -11,6 +13,8 @@ const SignIn = () => {
     const [authError, setAuthError] = useState('');
 
     const states = [username, password];
+
+    const navigate = useNavigate();
 
     const validateInput = async (e) => {
 
@@ -26,24 +30,56 @@ const SignIn = () => {
         })
 
         if (valid) {
-            const res = 401 //await signInUser(username.value, password.value);
+            const res = await signInUser(username.value, password.value);
 
+            
             if (res == 401) {
                 setAuthError('Invalid username/password.');
+                console.log(res);
             }
             else if (res == 400) {
                 setAuthError('Fill in all input fields.');
+                console.log(res);
             }
-            else if (res == 200) {
+            else if (res == 200 || res.username) {
                 setPassword({ value: '' });
                 setUsername({ value: '' });
+                sessionStorage.setItem('token', res.token);
+                sessionStorage.setItem('username', res.username);
+                navigate("/chat");
             }
             else {
                 setAuthError('An unexpected error occurred. Please try again later.');
+                console.log(res);
             }
         }
         e.preventDefault();
+    }
 
+    const signInUser = async (username, password) => {
+
+        const url = `${apiUrl}/api/signin`;
+
+        const result = await fetch(url, {
+            method: "POST",
+            headers: {
+                'Content-Type': 'application/json; charset=utf-8',
+            },
+            credentials: 'include',
+            body: JSON.stringify({ "Username": username, "Password": password }),
+        })
+            .then(response => {
+                if (response.ok)
+                    return response.json();
+                else
+                    return response.status;
+            })
+            .catch(error => {
+                console.log(error);
+                return 500;
+            });
+
+        return result.username ? result : 200;
     }
 
     return (
