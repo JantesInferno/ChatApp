@@ -11,10 +11,11 @@ const SignUp = () => {
 
     const [username, setUsername] = useState({ value: '' });
     const [password, setPassword] = useState({ value: '' });
+    const [confirmPassword, setConfirmPassword] = useState({ value: '' });
     const [isError, setIsError] = useState(false);
     const [authError, setAuthError] = useState('');
 
-    const states = [username, password];
+    const states = [username, password, confirmPassword];
 
     const navigate = useNavigate();
 
@@ -26,7 +27,7 @@ const SignUp = () => {
         let valid = true;
         // validate password
         states.map(state => {
-            if (state.value == "" || (state.type === 'password' && state.value.length < 6)) {
+            if (state.value == "" || (state.type === 'password' && state.value.length < 6) || password !== confirmPassword) {
                 setIsError(true);
                 valid = false;
             }
@@ -97,9 +98,15 @@ const SignUp = () => {
                         sx={{ width: '60%', input: { color: '#FFF' }, label: { color: '#FFF' } }}
                     />
 
-                    <TextField color="action" label="Password" variant="filled"
+                    <TextField color="action" label="Password" type="password" variant="filled"
                         value={password.value} error={isError && password.value.length < 6} helperText={isError && password.value.length < 6 ? 'Atleast 6 characters' : ''}
                         onChange={event => setPassword({ type: 'password', value: event.target.value })}
+                        sx={{ width: '60%', input: { color: '#FFF' }, label: { color: '#FFF' } }}
+                    />
+
+                    <TextField color="action" label="Confirm Password" type="password" variant="filled"
+                        value={confirmPassword.value} error={isError && confirmPassword.value != password.value} helperText={isError && confirmPassword.value != password.value ? 'Passwords doesnt match' : ''}
+                        onChange={event => setConfirmPassword({ type: 'confirmPassword', value: event.target.value })}
                         sx={{ width: '60%', input: { color: '#FFF' }, label: { color: '#FFF' } }}
                     />
 

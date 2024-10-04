@@ -6,12 +6,9 @@ using ChatApp.Server.Domain.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using SQLitePCL;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using System.Security.Principal;
 using System.Text;
 
 namespace ChatApp.Server.Controllers
@@ -38,46 +35,22 @@ namespace ChatApp.Server.Controllers
         [Route("/api/signin")]
         [HttpPost]
         [AllowAnonymous]
-        public async Task<IActionResult> SignIn([FromBody] SignInDTO userDto)
+        public async Task<IActionResult> SignIn([FromBody] SignInRequest userDto)
         {
             var result = await _signInManager.PasswordSignInAsync(userDto.Username, userDto.Password, false, false);
 
             if (result.Succeeded)
             {
-                //var user = await _userManager.FindByNameAsync(userDto.Username);
-                var user = await _userManager.Users
-                                    .Include(x => x.ChatRooms)
-                                    .SingleAsync(x => x.UserName == userDto.Username);
+                var user = await _userManager.FindByNameAsync(userDto.Username);
 
                 if (user != null)
                 {
-                    // Seed and manually assign chat room
-
-                    var chatRoom = await _context.ChatRooms.FirstOrDefaultAsync(room => room.Name == "Global chat");
-
-                    if (chatRoom == null)
-                    {
-                        chatRoom = new ChatRoom("Global chat");
-                        await _context.ChatRooms.AddAsync(chatRoom);
-                    }
-
-                    if (user.ChatRooms == null)
-                    {
-                        user.ChatRooms = new List<ChatRoom>();
-                    }
-
-                    if (!user.ChatRooms.Any(room => room.Name == "Global chat"))
-                    {
-                        user.ChatRooms.Add(chatRoom);
-                        _context.Users.Update(user);
-                        await _context.SaveChangesAsync();
-                    }
+                    //_context.ChatRooms.Add(new ChatRoom("Family chat"));
+                    //_context.ChatRooms.Add(new ChatRoom("Dev chat"));
+                    //await _context.SaveChangesAsync();
 
                     // Arrange response with token
-
-                    // ******************************** TODO ********************************
-                    // Remove chat room data from response
-                    var response = _mapper.Map<UserDTO>(user);
+                    var response = _mapper.Map<SignInResponse>(user);
                     var token = GenerateToken(user!);
                     response.Token = token;
 
@@ -93,7 +66,7 @@ namespace ChatApp.Server.Controllers
         [Route("/api/signup")]
         [HttpPost]
         [AllowAnonymous]
-        public async Task<IActionResult> SignUp([FromBody] SignInDTO userDto)
+        public async Task<IActionResult> SignUp([FromBody] SignInRequest userDto)
         {
             var result = await _userManager.CreateAsync(new User(userDto.Username), userDto.Password);
 
@@ -131,7 +104,7 @@ namespace ChatApp.Server.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogInformation($"@GenerateToken: {ex.Message}");
+                _logger.LogInformation($"Error generating token: {ex.Message}");
                 return null!;
             }
         }

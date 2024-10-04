@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
 import { Button, TextField, Typography } from '@mui/material';
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 
 const SignIn = () => {
     const apiUrl = import.meta.env.VITE_REACT_API_URL;
@@ -14,6 +14,7 @@ const SignIn = () => {
     const states = [username, password];
 
     const navigate = useNavigate();
+    const location = useLocation();
 
     const validateInput = async (e) => {
 
@@ -32,6 +33,8 @@ const SignIn = () => {
         if (valid) {
             const res = await signInUser(username.value, password.value);
 
+            console.log(res);
+
             // check http status code and act accordingly, setting AuthError for ui feedback
             if (res == 401) {
                 setAuthError('Invalid username/password.');
@@ -43,7 +46,15 @@ const SignIn = () => {
                 setPassword({ value: '' });
                 setUsername({ value: '' });
                 sessionStorage.setItem('token', res.token);
-                navigate("/chat");
+
+                const queryParams = new URLSearchParams(location.search);
+                const redirectUrl = queryParams.get('redirect');
+
+                if (redirectUrl) {
+                    navigate(redirectUrl);
+                } else {
+                    navigate('/chat');
+                }
             }
             else {
                 setAuthError('An unexpected error occurred. Please try again later.');

@@ -12,5 +12,20 @@ namespace ChatApp.Server.Data.Contexts
 
         public DbSet<ChatRoom> ChatRooms { get; set; }
         public DbSet<ChatMessage> ChatMessages { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            // Configure many-to-many relationship between User and ChatRoom
+            modelBuilder.Entity<ChatRoom>()
+                .HasMany(c => c.Users)
+                .WithMany(u => u.ChatRooms)
+                .UsingEntity<Dictionary<string, object>>(
+                    "ChatRoomUser",
+                    r => r.HasOne<User>().WithMany().HasForeignKey("UsersId"),
+                    l => l.HasOne<ChatRoom>().WithMany().HasForeignKey("ChatRoomsId")
+                );
+        }
     }
 }

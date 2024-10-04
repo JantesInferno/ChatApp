@@ -2,7 +2,7 @@
 
 namespace ChatApp.Server.Domain.DTO
 {
-    public class SignInDTO
+    public class SignInRequest
     {
         [Required]
         [StringLength(20)]

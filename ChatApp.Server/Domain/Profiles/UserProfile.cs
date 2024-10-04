@@ -9,8 +9,8 @@ namespace ChatApp.Server.Domain.Profiles
     {
         public UserProfile()
         {
-            CreateMap<User, SignInDTO>().ReverseMap();
-            //CreateMap<User, RegisterUserDTO>().ReverseMap();
+            CreateMap<User, SignInRequest>().ReverseMap();
+            CreateMap<User, SignInResponse>().ReverseMap();
             CreateMap<User, UserDTO>().ReverseMap();
         }
     }

@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 
 const ChatRoom = ({ connection, chatRoom }) => {
     const [chatMessages, setChatMessages] = useState([]);
+    const [users, setUsers] = useState([]);
     const [newMessage, setNewMessage] = useState("");
     const [usersTyping, setUsersTyping] = useState([]);
 
@@ -17,7 +18,7 @@ const ChatRoom = ({ connection, chatRoom }) => {
             await connection.invoke("SendMessage", newMessage, chatRoom.Name);
             await connection.invoke("DeactivateTypingIndicator", chatRoom.Name);
             setNewMessage('');
-        } catch (error) {
+        } catch (error) {z
             console.error("Error sending message:", error);
         }
     }
@@ -108,63 +109,92 @@ const ChatRoom = ({ connection, chatRoom }) => {
     useEffect(() => {
         if (chatRoom) {
             setChatMessages(chatRoom.ChatMessages || []);
+            const sortedUsers = chatRoom.Users.sort(function (a, b) { if (a.Username.toLowerCase() < b.Username.toLowerCase()) return -1; if (a.Username.toLowerCase() > b.Username.toLowerCase()) return 1; return 0; })
+            console.log(sortedUsers);
+            setUsers(sortedUsers || []);
         }
     }, [chatRoom]);
-
 
     
     return (
         <div className="chatbox-wrapper">
             <div className="chatbox-message-wrapper">
-                <div className="chatbox-message-header">
-                    <span>{chatRoom.Name}</span>
+                <div className="chatbox-message-header selector">
                 </div>
-                <div className="chatbox-message-content">
-                    {
-                        chatMessages && chatMessages.map((msg) => {
+                <div className="selector" style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between'}}>
+                    <div className="chatbox-message-content">
+                        {
+                            chatRoom && chatMessages.length > 0 ? chatMessages.map((msg) => {
+                                return (
+                                    <div key={msg.Id} className="chatbox-message-item">
+                                        <div key={msg.Id + msg.Username} className="chatbox-message-sender">
+                                            <span key={msg.Username} className="chatbox-message-sender-text">{sanitizeHtml(msg.Username)}</span>
+                                            <span key={msg.DateTime} className="chatbox-message-item-time">{msg.DateTime}</span>
+                                        </div>
+                                        <div key={msg.Id + msg.Message} className="chatbox-message-item sent">
+                                            <span key={sanitizeHtml(msg.Message)} className="chatbox-message-item-text">
+                                                {msg.Message}
+                                            </span>
+                                        </div>
+                                    </div>
+                                )
+                            })
+                                : <span>Wow, such empty</span>
+                        }
+                    </div>
+
+                    <div className="chatbox-message-bottom selector">
+                        {
+                            usersTyping.length > 0
+                                ?
+                                    <div className="chatbox-message-typing">
+                                        <div className="typing">
+                                            <span></span>
+                                            <span></span>
+                                            <span></span>
+                                        </div>
+                                        {
+                                            usersTyping.map((user, idx) => {
+                                                return (
+                                                    <span key={user}>&nbsp;{user} {idx == usersTyping.length - 1 ? '' : ','}</span>
+                                                )
+                                            })
+                                        }
+                                        <span>&nbsp;is typing...</span>
+                                    </div>
+                                : null
+                        }   
+
+                        <form onSubmit={handleSubmit} action="#" className="chatbox-message-form">
+                            <textarea cols="200" rows="1" placeholder="Message" className="chatbox-message-input" value={newMessage} onChange={handleOnChange} onKeyPress={handleKeyPress}></textarea>
+                            <button type="submit" className="chatbox-message-submit">Send</button>
+                        </form>
+                    </div>
+
+                    <div className="users-status-list selector">
+                        <div className="users-status-list-header">
+                            Members - {users.length}
+                        </div>
+                        {chatRoom && users && users.map((user) => {
                             return (
-                                <div key={msg.Id} className="chatbox-message-item">
-                                    <div key={msg.Id + msg.Username} className="chatbox-message-sender">
-                                        <span key={msg.Username} className="chatbox-message-sender-text">{sanitizeHtml(msg.Username)}</span>
-                                        <span key={msg.DateTime} className="chatbox-message-item-time">{msg.DateTime}</span>
-                                    </div>
-                                    <div key={msg.Id + msg.Message} className="chatbox-message-item sent">
-                                        <span key={sanitizeHtml(msg.Message)} className="chatbox-message-item-text">
-                                            {msg.Message}
-                                        </span>
-                                    </div>
+                                <div key={user.Username} className="user-status">
+                                    <div className="user-status-icon"
+                                        style={{
+                                            background: user.IsOnline
+                                                ? 'linear-gradient(90deg, #0e4206, #37a127)'
+                                                : 'linear-gradient(90deg, #4d1111, #b53a3a)'
+                                        }}
+                                    ></div>
+                                    {user.Username}
                                 </div>
-                            )
-                        })
-                    }
-                </div>
 
-                <div className="chatbox-message-bottom">
-                    {
-                        usersTyping.length > 0
-                            ?
-                                <div className="chatbox-message-typing">
-                                    <div className="typing">
-                                        <span></span>
-                                        <span></span>
-                                        <span></span>
-                                    </div>
-                                    {
-                                        usersTyping.map((user, idx) => {
-                                            return (
-                                                <span key={user}>&nbsp;{user} {idx == usersTyping.length - 1 ? '' : ','}</span>
-                                            )
-                                        })
-                                    }
-                                    <span>&nbsp;is typing...</span>
-                                </div>
-                            : null
-                    }   
+                            );
+                        })}
+                    </div>
 
-                    <form onSubmit={handleSubmit} action="#" className="chatbox-message-form">
-                        <textarea cols="200" rows="1" placeholder="Message" className="chatbox-message-input" value={newMessage} onChange={handleOnChange} onKeyPress={handleKeyPress}></textarea>
-                        <button type="submit" className="chatbox-message-submit">Send</button>
-                    </form>
+                    <button className="invite-link-button" onClick={() => navigator.clipboard.writeText(`${window.location.origin}/chat/${chatRoom.Id}`)}>
+                        Copy Invite Link
+                    </button>
                 </div>
             </div>
         </div>

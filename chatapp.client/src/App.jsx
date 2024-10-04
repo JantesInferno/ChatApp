@@ -16,6 +16,7 @@ function App() {
             <Route path='/signin' element={<SignIn />} />
             <Route path='/signup' element={<SignUp />} />
             <Route path='/chat' element={<ChatOverview />} />
+            <Route path='/chat/:chatRoomIdFromUrl' element={<ChatOverview />} />
         </Routes>
     );
 }
