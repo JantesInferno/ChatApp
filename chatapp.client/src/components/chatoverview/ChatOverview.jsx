@@ -88,7 +88,7 @@ const ChatOverview = () => {
         if (connection) {
             connection.start()
                 .then(function () {
-                    connection.on("ReceiveMessage", (user) => {
+                    connection.on("UserSignedIn", (user) => {
                         // ******************************** TODO ********************************
                         console.log(user);
                     });
@@ -191,6 +191,7 @@ const ChatOverview = () => {
             {/* Render currently active chat room */}
             {connection && chatRooms.length > 0 && activeChatRoomId && (
                 <ChatRoom
+                    key={activeChatRoomId}
                     connection={connection}
                     chatRoom={chatRooms.find((room) => room.Id === activeChatRoomId)}
                 />

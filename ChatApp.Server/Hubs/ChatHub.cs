@@ -42,7 +42,7 @@ namespace ChatApp.Server.Hubs
             {
                 var roomNames = user.ChatRooms.Select(x => x.Name).ToList();
 
-                await Clients.Groups(roomNames).SendAsync("UserSignedIn'", username);
+                await Clients.Groups(roomNames).SendAsync("UserSignedIn", username);
             }
 
             await FetchChatData();
@@ -104,6 +104,12 @@ namespace ChatApp.Server.Hubs
                     Groups.AddToGroupAsync(Context.ConnectionId, x.Name);
                 });
 
+                chatRooms.ForEach(x =>
+                {
+                    x.ChatMessages = x.ChatMessages.OrderBy(cm => cm.DateTime).ToList();
+                });
+
+
                 var jsonChatRooms = JsonConvert.SerializeObject(chatRooms);
 
                 _logger.LogInformation($"Fetching chat data for {username}.");
@@ -136,22 +142,22 @@ namespace ChatApp.Server.Hubs
             await Clients.Group(chatRoom).SendAsync("ReceiveChatMessage", json);
         }
 
-        public async Task ActivateTypingIndicator(string chatRoom)
+        public async Task ActivateTypingIndicator(string chatRoomName)
         {
             var username = Context.User!.Identity!.Name;
 
             _logger.LogInformation($"User {username} started typing");
 
-            await Clients.GroupExcept(chatRoom, Context.ConnectionId).SendAsync("ReceiveTypingIndicatorOn", username);
+            await Clients.GroupExcept(chatRoomName, Context.ConnectionId).SendAsync($"ReceiveTypingIndicatorOn_{chatRoomName}", username);
         }
 
-        public async Task DeactivateTypingIndicator(string chatRoom)
+        public async Task DeactivateTypingIndicator(string chatRoomName)
         {
             var username = Context.User!.Identity!.Name;
 
             _logger.LogInformation($"User {username} stopped typing");
 
-            await Clients.GroupExcept(chatRoom, Context.ConnectionId).SendAsync("ReceiveTypingIndicatorOff", username);
+            await Clients.GroupExcept(chatRoomName, Context.ConnectionId).SendAsync($"ReceiveTypingIndicatorOff_{chatRoomName}", username);
         }
     }
 }

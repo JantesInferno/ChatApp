@@ -18,7 +18,7 @@ const ChatRoom = ({ connection, chatRoom }) => {
             await connection.invoke("SendMessage", newMessage, chatRoom.Name);
             await connection.invoke("DeactivateTypingIndicator", chatRoom.Name);
             setNewMessage('');
-        } catch (error) {z
+        } catch (error) {
             console.error("Error sending message:", error);
         }
     }
@@ -64,21 +64,26 @@ const ChatRoom = ({ connection, chatRoom }) => {
             d1.getDate() === d2.getDate();
     }
 
-    // handle duplicate/remove users in array
-    const filterDuplicateUsers = (user) => {
-        let newArr = usersTyping.filter(x => x !== user)
-        setUsersTyping(newArr);
-    }
-
     // SignalR methods for receiving data
     useEffect(() => {
-        connection.on("ReceiveTypingIndicatorOn", (user) => {
-            filterDuplicateUsers(user);
-            setUsersTyping(prev => [...prev, user]);
+
+        const typingOnEvent = `ReceiveTypingIndicatorOn_${chatRoom.Name}`;
+        const typingOffEvent = `ReceiveTypingIndicatorOff_${chatRoom.Name}`;
+
+        connection.on(typingOnEvent, (user) => {
+            setUsersTyping((prev) => {
+                const found = prev.find((username) => username === user);
+                if (!found) {
+                    return [...prev, user];
+                }
+                return prev;
+            });
         });
         
-        connection.on("ReceiveTypingIndicatorOff", (user) => {
-            filterDuplicateUsers(user);
+        connection.on(typingOffEvent, (user) => {
+            setUsersTyping((prev) => {
+                return prev.filter((username) => username !== user);
+            });
         });
 
         connection.on("ReceiveChatMessage", (msg) => {
@@ -97,7 +102,13 @@ const ChatRoom = ({ connection, chatRoom }) => {
                 return [...newChatMessages, obj];
             });
         });
-    }, [connection]);
+
+        return () => {
+            connection.off(typingOnEvent);
+            connection.off(typingOffEvent);
+            connection.off("ReceiveChatMessage");
+        };
+    }, [connection, chatRoom.Name]);
 
     // automatically scroll down chat to last message
     useEffect(() => {
