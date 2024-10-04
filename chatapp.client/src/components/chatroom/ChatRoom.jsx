@@ -57,11 +57,18 @@ const ChatRoom = ({ connection, chatRoom }) => {
     }
 
     // check if message's date is the current date
-    function sameDay(d1) {
-        let d2 = new Date();
-        return d1.getFullYear() === d2.getFullYear() &&
-            d1.getMonth() === d2.getMonth() &&
-            d1.getDate() === d2.getDate();
+    function checkDay(messageDate) {
+        var date = messageDate.getDate(),
+            diffDays = new Date().getDate() - date,
+            diffMonths = new Date().getMonth() - messageDate.getMonth(),
+            diffYears = new Date().getFullYear() - messageDate.getFullYear();
+
+        if (diffYears === 0 && diffDays === 0 && diffMonths === 0)
+            return "today";
+        else if (diffYears === 0 && diffDays === 1)
+            return "yesterday";
+
+        return null;
     }
 
     // SignalR methods for receiving data
@@ -90,8 +97,9 @@ const ChatRoom = ({ connection, chatRoom }) => {
             let obj = JSON.parse(msg);
             let date = new Date(Date.parse(obj.DateTime));
 
-            if (sameDay(date))
-                date = `today at ${(date.getHours() < 10 ? '0' : '') + date.getHours()}:${(date.getMinutes() < 10 ? '0' : '') + date.getMinutes()}`;
+            let day = checkDay(date)
+            if (day)
+                date = `${day} at ${(date.getHours() < 10 ? '0' : '') + date.getHours()}:${(date.getMinutes() < 10 ? '0' : '') + date.getMinutes()}`;
             else 
                 date = obj.ShortDate;
 

@@ -49,11 +49,18 @@ const ChatOverview = () => {
     }
 
     // check if message's date is the current date
-    function sameDay(d1) {
-        let d2 = new Date();
-        return d1.getFullYear() === d2.getFullYear() &&
-            d1.getMonth() === d2.getMonth() &&
-            d1.getDate() === d2.getDate();
+    function checkDay(messageDate) {
+        var date = messageDate.getDate(),
+            diffDays = new Date().getDate() - date,
+            diffMonths = new Date().getMonth() - messageDate.getMonth(),
+            diffYears = new Date().getFullYear() - messageDate.getFullYear();
+
+        if (diffYears === 0 && diffDays === 0 && diffMonths === 0)
+            return "today";
+        else if (diffYears === 0 && diffDays === 1)
+            return "yesterday";
+
+        return null;
     }
 
     // set up connection to SignalR hub with token
@@ -100,8 +107,10 @@ const ChatOverview = () => {
                         obj.forEach(x => {
                             x.ChatMessages.forEach(y => {
                                 var date = new Date(Date.parse(y.DateTime));
-                                if (sameDay(date))
-                                    date = `today at ${(date.getHours() < 10 ? '0' : '') + date.getHours()}:
+
+                                let day = checkDay(date)
+                                if (day)
+                                    date = `${day} at ${(date.getHours() < 10 ? '0' : '') + date.getHours()}:
                                                     ${(date.getMinutes() < 10 ? '0' : '') + date.getMinutes()}`;
                                 else 
                                     date = y.ShortDate;
