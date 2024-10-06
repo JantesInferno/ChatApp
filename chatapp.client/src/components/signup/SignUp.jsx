@@ -21,20 +21,28 @@ const SignUp = () => {
 
     const createUser = async (e) => {
 
+        console.log(username);
+        console.log(password);
+        console.log(confirmPassword);
+
         setAuthError('');
         setIsError(false);
 
         let valid = true;
         // validate password
         states.map(state => {
-            if (state.value == "" || (state.type === 'password' && state.value.length < 6) || password !== confirmPassword) {
+            if (state.value == "" || (state.type === 'password' && state.value.length < 6) || password.value !== confirmPassword.value) {
                 setIsError(true);
                 valid = false;
             }
         })
 
+        console.log("valid: ", valid);
+
         if (valid) {
             const result = await createUserAccount(username.value, password.value);
+
+            console.log("result: ", result);
 
             // check http status code and act accordingly, setting AuthError for ui feedback
             if (result == 400) {
@@ -42,7 +50,8 @@ const SignUp = () => {
             }
             else if (result == 200) {
                 setUsername({ value: '' });
-                setUsername({ value: '' });
+                setPassword({ value: '' });
+                setConfirmPassword({ value: '' });
                 navigate('/signin');
             }
             else {

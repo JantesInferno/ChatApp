@@ -1,4 +1,4 @@
-.chatrooms-list {
+.chatrooms-open-list {
     display: flex;
     justify-content: flex-start;
     max-width: 42.5vw;
@@ -62,7 +62,7 @@
     text-align: left;
 }
 
-.navbar {
+.chatrooms-nav {
     display: flex;
     justify-content: space-between;
 }
@@ -81,6 +81,11 @@
     cursor: pointer;
     margin: 1rem 0;
     padding: 0 1rem;
+}
+
+.chatbox-header {
+    padding: 1rem 1rem;
+    border-top-right-radius: 0.5rem;
 }
 
 

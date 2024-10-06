@@ -25,39 +25,72 @@ namespace ChatApp.Server.Hubs
             _mapper = mapper;
         }
 
-        public override async Task OnConnectedAsync()
+        public async Task UpdateOnlineStatus(string username, bool online)
         {
-            var username = Context.User!.Identity!.Name;
-
-            _logger.LogInformation($"User {username} has connected.");
-
             User user = await _context.Users.Include(u => u.ChatRooms)
                                             .SingleAsync(u => u.UserName == username);
 
-            user.IsOnline = true;
+            user.IsOnline = online;
 
             await _context.SaveChangesAsync();
+
+            var userDto = _mapper.Map<UserDTO>(user);
+            var userJson = JsonConvert.SerializeObject(userDto);
 
             if (user.ChatRooms != null)
             {
                 var roomNames = user.ChatRooms.Select(x => x.Name).ToList();
 
-                await Clients.Groups(roomNames).SendAsync("UserSignedIn", username);
+                await Clients.Groups(roomNames).SendAsync("UserOnlineStatusUpdate", userJson);
             }
+        }
 
-            await FetchChatData();
+        public override async Task OnConnectedAsync()
+        {
+            try
+            {
+                var username = Context.User!.Identity!.Name;
+
+                if (username == null)
+                {
+                    _logger.LogInformation($"User token is invalid.");
+                    throw new UnauthorizedAccessException();
+                }
+
+                _logger.LogInformation($"User {username} has connected.");
+
+                await UpdateOnlineStatus(username, true);
+
+                await FetchChatData();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogInformation($"Unexpected error: {ex.Message}");
+            }
         }
 
         public override async Task OnDisconnectedAsync(Exception? exception)
         {
-            var username = Context.User?.Identity?.Name;
+            try
+            {
+                var username = Context.User!.Identity!.Name;
 
-            User user = await _context.Users.SingleAsync(u => u.UserName == username);
+                if ( username == null )
+                {
+                    _logger.LogInformation($"User token is invalid.");
+                    throw new UnauthorizedAccessException();
+                }
 
-            user.IsOnline = false;
-            await _context.SaveChangesAsync();
+                _logger.LogInformation($"User {username} has disconnected.");
 
-            await base.OnDisconnectedAsync(exception);
+                await UpdateOnlineStatus(username, false);
+
+                await base.OnDisconnectedAsync(exception);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogInformation($"Unexpected error: {ex.Message}");
+            }
         }
 
         public async Task JoinChatRoom(string chatRoomId)
@@ -110,11 +143,11 @@ namespace ChatApp.Server.Hubs
                 });
 
 
-                var jsonChatRooms = JsonConvert.SerializeObject(chatRooms);
+                var chatRoomsJson = JsonConvert.SerializeObject(chatRooms);
 
                 _logger.LogInformation($"Fetching chat data for {username}.");
 
-                await Clients.Client(Context.ConnectionId).SendAsync("ReceiveData", jsonChatRooms);
+                await Clients.Client(Context.ConnectionId).SendAsync("ReceiveData", chatRoomsJson);
             }
         }
 

@@ -3,7 +3,7 @@
 import './chatroom.css';
 import { useState, useEffect } from 'react';
 
-const ChatRoom = ({ connection, chatRoom }) => {
+const ChatRoom = ({ connection, chatRoom, userOnline }) => {
     const [chatMessages, setChatMessages] = useState([]);
     const [users, setUsers] = useState([]);
     const [newMessage, setNewMessage] = useState("");
@@ -71,6 +71,16 @@ const ChatRoom = ({ connection, chatRoom }) => {
         return null;
     }
 
+    const sortUsers = (users) => {
+        const sortedUsers = users.sort(function (a, b) {
+            if (a.Username.toLowerCase() < b.Username.toLowerCase()) return -1;
+            if (a.Username.toLowerCase() > b.Username.toLowerCase()) return 1;
+            return 0;
+        });
+
+        return sortedUsers;
+    }
+
     // SignalR methods for receiving data
     useEffect(() => {
 
@@ -106,8 +116,8 @@ const ChatRoom = ({ connection, chatRoom }) => {
             obj.DateTime = date;
 
             setChatMessages(prevChatMessages => {
-                let newChatMessages = prevChatMessages.filter(x => x.Id !== obj.Id);
-                return [...newChatMessages, obj];
+                let filteredChatMessages = prevChatMessages.filter(x => x.Id !== obj.Id);
+                return [...filteredChatMessages, obj];
             });
         });
 
@@ -128,44 +138,59 @@ const ChatRoom = ({ connection, chatRoom }) => {
     useEffect(() => {
         if (chatRoom) {
             setChatMessages(chatRoom.ChatMessages || []);
-            const sortedUsers = chatRoom.Users.sort(function (a, b) { if (a.Username.toLowerCase() < b.Username.toLowerCase()) return -1; if (a.Username.toLowerCase() > b.Username.toLowerCase()) return 1; return 0; })
-            console.log(sortedUsers);
-            setUsers(sortedUsers || []);
+            setUsers(sortUsers(chatRoom.Users) || []);
         }
     }, [chatRoom]);
 
+    useEffect(() => {
+        if (userOnline) {
+            setUsers((prevUsers) => {
+                let filteredUsers = prevUsers.filter(u => u.Username !== userOnline.Username);
+                const updatedUsers = [...filteredUsers, userOnline];
+                return sortUsers(updatedUsers);
+            });
+        }
+    }, [userOnline]);
+
     
     return (
-        <div className="chatbox-wrapper">
-            <div className="chatbox-message-wrapper">
-                <div className="chatbox-message-header selector">
+        <div className="chatroom-container">
+            <div className="chatroom-header selector">
+            </div>
+            <div className="chatroom-main">
+                <div className="chatroom-side-panel selector">
                 </div>
-                <div className="selector" style={{ display: 'flex', flexDirection: 'row', justifyContent: 'space-between'}}>
-                    <div className="chatbox-message-content">
+                <div className="chatbox-message-content">
+                    <div className="chatbox-message-list">
                         {
-                            chatRoom && chatMessages.length > 0 ? chatMessages.map((msg) => {
-                                return (
-                                    <div key={msg.Id} className="chatbox-message-item">
-                                        <div key={msg.Id + msg.Username} className="chatbox-message-sender">
-                                            <span key={msg.Username} className="chatbox-message-sender-text">{sanitizeHtml(msg.Username)}</span>
-                                            <span key={msg.DateTime} className="chatbox-message-item-time">{msg.DateTime}</span>
+                            chatRoom && chatMessages.length > 0
+                                ?
+                                chatMessages.map((msg) => {
+                                    return (
+                                        <div key={msg.Id} className="chatbox-message-item">
+                                            <div key={msg.Id + msg.Username} className="chatbox-message-sender">
+                                                <span key={msg.Username} className="chatbox-message-sender-text">{sanitizeHtml(msg.Username)}</span>
+                                                <span key={msg.DateTime} className="chatbox-message-item-time">{msg.DateTime}</span>
+                                            </div>
+                                            <div key={msg.Id + msg.Message} className="chatbox-message-item sent">
+                                                <span key={sanitizeHtml(msg.Message)} className="chatbox-message-item-text">
+                                                    {msg.Message}
+                                                </span>
+                                            </div>
                                         </div>
-                                        <div key={msg.Id + msg.Message} className="chatbox-message-item sent">
-                                            <span key={sanitizeHtml(msg.Message)} className="chatbox-message-item-text">
-                                                {msg.Message}
-                                            </span>
-                                        </div>
-                                    </div>
-                                )
-                            })
-                                : <span>Wow, such empty</span>
+                                    )
+                                })
+                                :
+                                <div className="chatbox-message-empty">
+                                    <span>Wow, such empty</span>
+                                </div>
                         }
                     </div>
 
-                    <div className="chatbox-message-bottom selector">
-                        {
-                            usersTyping.length > 0
-                                ?
+                    {
+                        usersTyping.length > 0
+                            ?
+                                <div className="chatbox-typing-indicator">
                                     <div className="chatbox-message-typing">
                                         <div className="typing">
                                             <span></span>
@@ -181,14 +206,12 @@ const ChatRoom = ({ connection, chatRoom }) => {
                                         }
                                         <span>&nbsp;is typing...</span>
                                     </div>
-                                : null
-                        }   
-
-                        <form onSubmit={handleSubmit} action="#" className="chatbox-message-form">
-                            <textarea cols="200" rows="1" placeholder="Message" className="chatbox-message-input" value={newMessage} onChange={handleOnChange} onKeyPress={handleKeyPress}></textarea>
-                            <button type="submit" className="chatbox-message-submit">Send</button>
-                        </form>
-                    </div>
+                                </div>
+                            :
+                                null
+                    }
+    
+                </div>
 
                     <div className="users-status-list selector">
                         <div className="users-status-list-header">
@@ -209,12 +232,21 @@ const ChatRoom = ({ connection, chatRoom }) => {
 
                             );
                         })}
-                    </div>
-
                     <button className="invite-link-button" onClick={() => navigator.clipboard.writeText(`${window.location.origin}/chat/${chatRoom.Id}`)}>
-                        Copy Invite Link
+                        Invitation link
+                        <svg xmlns="http://www.w3.org/2000/svg" className="icon icon-tabler icon-tabler-copy" width="22" height="22" viewBox="0 0 24 24" strokeWidth="2" stroke="#ffffff" fill="none" strokeLinecap="round" strokeLinejoin="round">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                            <path d="M7 7m0 2.667a2.667 2.667 0 0 1 2.667 -2.667h8.666a2.667 2.667 0 0 1 2.667 2.667v8.666a2.667 2.667 0 0 1 -2.667 2.667h-8.666a2.667 2.667 0 0 1 -2.667 -2.667z" />
+                            <path d="M4.012 16.737a2.005 2.005 0 0 1 -1.012 -1.737v-10c0 -1.1 .9 -2 2 -2h10c.75 0 1.158 .385 1.5 1" />
+                        </svg>
                     </button>
-                </div>
+                    </div>
+            </div>
+            <div className="chatroom-form-container selector">
+                <form onSubmit={handleSubmit} action="#" className="chatroom-message-form">
+                    <textarea cols="200" rows="4" placeholder="Message" className="chatroom-message-input" value={newMessage} onChange={handleOnChange} onKeyPress={handleKeyPress}></textarea>
+                    <button type="submit" className="chatroom-message-submit">Send</button>
+                </form>
             </div>
         </div>
     )

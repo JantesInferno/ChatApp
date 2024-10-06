@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { HubConnectionBuilder, LogLevel } from '@microsoft/signalr';
 import ChatRoom from "../chatroom/ChatRoom";
+import ChatRoomTab from "../chatroom-tab/ChatRoomTab";
 import './chatOverview.css';
 
 
@@ -11,6 +12,7 @@ const ChatOverview = () => {
     const [connection, setConnection] = useState();
     const [chatRooms, setChatRooms] = useState([]);
     const [activeChatRoomId, setActiveChatRoomId] = useState();
+    const [userOnline, setUserOnline] = useState();
 
     const { chatRoomIdFromUrl } = useParams();
     const navigate = useNavigate();
@@ -49,7 +51,7 @@ const ChatOverview = () => {
     }
 
     // check if message's date is the current date
-    function checkDay(messageDate) {
+    function formatDay(messageDate) {
         var date = messageDate.getDate(),
             diffDays = new Date().getDate() - date,
             diffMonths = new Date().getMonth() - messageDate.getMonth(),
@@ -95,20 +97,18 @@ const ChatOverview = () => {
         if (connection) {
             connection.start()
                 .then(function () {
-                    connection.on("UserSignedIn", (user) => {
+                    connection.on("UserOnlineStatusUpdate", (user) => {
                         // ******************************** TODO ********************************
-                        console.log(user);
+                        setUserOnline(JSON.parse(user));
                     });
                     connection.on("ReceiveData", (data) => {
                         let obj = JSON.parse(data);
-
-                        console.log(obj);
 
                         obj.forEach(x => {
                             x.ChatMessages.forEach(y => {
                                 var date = new Date(Date.parse(y.DateTime));
 
-                                let day = checkDay(date)
+                                let day = formatDay(date)
                                 if (day)
                                     date = `${day} at ${(date.getHours() < 10 ? '0' : '') + date.getHours()}:
                                                     ${(date.getMinutes() < 10 ? '0' : '') + date.getMinutes()}`;
@@ -121,6 +121,11 @@ const ChatOverview = () => {
                             
                         setChatRooms(obj);
                     });
+
+                    return () => {
+                        connection.off("UserOnlineStatusUpdate");
+                        connection.off("ReceiveData");
+                    };
                 })
                 .catch(error =>
                     console.error(error.toString()));
@@ -130,8 +135,6 @@ const ChatOverview = () => {
     // Set active chat room when `chatRooms` or `chatRoomIdFromUrl` changes
     useEffect(() => {
         if (connection && chatRoomIdFromUrl && chatRoomIdFromUrl.toLowerCase() != activeChatRoomId) {
-            console.log("chatRoomIdFromUrl", chatRoomIdFromUrl);
-            console.log("activeChatRoomId", activeChatRoomId);
             const room = chatRooms.find((room) => room.Id == chatRoomIdFromUrl);
             if (room) {
                 setActiveChatRoomId(chatRoomIdFromUrl.toLowerCase());
@@ -150,42 +153,10 @@ const ChatOverview = () => {
 
         <>
             {/* Links to different chatrooms */}
-            <div className="navbar">
-            <div className="chatrooms-list">
-                {activeChatRoomId != null && chatRooms.map((room) => (
-                    <div
-                        key={room.Id}
-                        className={"chatroom-tab " + (room.Id === activeChatRoomId ? 'selector' : '')}
-                        onClick={() => handleChatRoomChange(room.Id)}
-                        >
-                        {/*<button*/}
-                        {/*    className="chatroom-tab-button"*/}
-                        {/*    onClick={() => handleChatRoomChange(room.Id)}*/}
-                        {/*    style={{*/}
-                        {/*        background: room.Id === activeChatRoomId ? 'linear-gradient(145deg, #332cf2, #4d9e41)' : '#111',*/}
-                        {/*        fontWeight: room.Id === activeChatRoomId ? 'bold' : 'normal',*/}
-                        {/*    }}*/}
-                        {/*>*/}
-                        {/*    {room.Name}*/}
-                        {/*</button>*/}
-                        {room.Name}
-                        {room.Users && room.Id != activeChatRoomId &&
-                            <div key="users" className="chatroom-tab-users">
-                                <div key="users-online" className="chatroom-tab-users-online">
-                                    <div className="user-status-icon"
-                                        style={{ background: 'linear-gradient(90deg, #0e4206, #37a127)' }}
-                                    >
-                                    </div>
-                                    {usersOnline(room).length}
-                                    <div className="user-status-icon"
-                                        style={{ background: 'linear-gradient(90deg, #4d1111, #b53a3a)' }}
-                                    >
-                                    </div>
-                                    {room.Users.length - usersOnline(room).length}
-                                </div>
-                            </div>
-                        }
-                    </div>
+            <div className="chatrooms-nav">
+            <div className="chatrooms-open-list">
+                    {activeChatRoomId != null && chatRooms.map((room) => (
+                        <ChatRoomTab key={room.Id} chatRoom={room} activeChatRoomId={activeChatRoomId} usersOnline={usersOnline} handleChatRoomChange={handleChatRoomChange} />
                 ))}
 
                 
@@ -203,6 +174,7 @@ const ChatOverview = () => {
                     key={activeChatRoomId}
                     connection={connection}
                     chatRoom={chatRooms.find((room) => room.Id === activeChatRoomId)}
+                    userOnline={userOnline}
                 />
             )}
         </>

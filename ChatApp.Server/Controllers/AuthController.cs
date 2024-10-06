@@ -6,6 +6,7 @@ using ChatApp.Server.Domain.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -13,24 +14,20 @@ using System.Text;
 
 namespace ChatApp.Server.Controllers
 {
-    public class AuthController : Controller
+    public class AuthController(
+        ChatAppDbContext context,
+        SignInManager<User> signInManager,
+        UserManager<User> userManager,
+        ILogger<AuthController> logger,
+        IConfiguration config,
+        IMapper mapper) : Controller
     {
-        private readonly ChatAppDbContext _context;
-        private readonly SignInManager<User> _signInManager;
-        private readonly UserManager<User> _userManager;
-        private readonly IConfiguration _config;
-        private readonly ILogger<AuthController> _logger;
-        private readonly IMapper _mapper;
-
-        public AuthController(ChatAppDbContext context, SignInManager<User> signInManager, UserManager<User> userManager, ILogger<AuthController> logger, IConfiguration config, IMapper mapper)
-        {
-            _context = context;
-            _signInManager = signInManager;
-            _userManager = userManager;
-            _logger = logger;
-            _config = config;
-            _mapper = mapper;
-        }
+        private readonly ChatAppDbContext _context = context;
+        private readonly SignInManager<User> _signInManager = signInManager;
+        private readonly UserManager<User> _userManager = userManager;
+        private readonly IConfiguration _config = config;
+        private readonly ILogger<AuthController> _logger = logger;
+        private readonly IMapper _mapper = mapper;
 
         [Route("/api/signin")]
         [HttpPost]
@@ -41,13 +38,27 @@ namespace ChatApp.Server.Controllers
 
             if (result.Succeeded)
             {
-                var user = await _userManager.FindByNameAsync(userDto.Username);
+                //var user = await _userManager.FindByNameAsync(userDto.Username);
+                var user = await _userManager.Users.Include(x => x.ChatRooms)
+                                                   .SingleAsync(x => x.UserName == userDto.Username);
 
                 if (user != null)
                 {
-                    //_context.ChatRooms.Add(new ChatRoom("Family chat"));
-                    //_context.ChatRooms.Add(new ChatRoom("Dev chat"));
-                    //await _context.SaveChangesAsync();
+                    // Add default chat room Global chat to user
+                    var chatRoom = _context.ChatRooms.FirstOrDefault(cr => cr.Name == "Global chat");
+
+                    if (chatRoom == null)
+                    {
+                        chatRoom = new ChatRoom("Global chat");
+                        await _context.ChatRooms.AddAsync(chatRoom);
+                    }
+
+                    if (!user.ChatRooms.Any(room => room.Name == "Global chat"))
+                    {
+                        user.ChatRooms.Add(chatRoom);
+                        _context.Users.Update(user);
+                        await _context.SaveChangesAsync();
+                    }
 
                     // Arrange response with token
                     var response = _mapper.Map<SignInResponse>(user);
