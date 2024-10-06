@@ -30,23 +30,23 @@ const ChatOverview = () => {
 
     const joinChatRoom = async (chatRoomId) => {
         if (chatRoomId) {
-            try {
-                await connection.invoke("JoinChatRoom", chatRoomId);
-                refreshChatRooms();
-                setActiveChatRoomId(chatRoomId);
-            } catch (error) {
-                console.error("Error while joining chat room:", error);
-            }
+            await connection.invoke("JoinChatRoom", chatRoomId)
+                .catch(err => {
+                    console.error(err.toString());
+                    alert(err.message);
+            });
+            refreshChatRooms();
+            setActiveChatRoomId(chatRoomId);
         }
     };
 
     const refreshChatRooms = async () => {
         if (connection) {
-            try {
-                await connection.invoke("FetchChatData");
-            } catch (error) {
-                console.error("Error while fetching chat data:", error);
-            }
+            await connection.invoke("FetchChatData")
+                .catch(err => {
+                    console.error(err.toString());
+                    alert(err.message);
+            });
         }
     }
 
@@ -98,7 +98,6 @@ const ChatOverview = () => {
             connection.start()
                 .then(function () {
                     connection.on("UserOnlineStatusUpdate", (user) => {
-                        // ******************************** TODO ********************************
                         setUserOnline(JSON.parse(user));
                     });
                     connection.on("ReceiveData", (data) => {
@@ -146,9 +145,7 @@ const ChatOverview = () => {
         }
     }, [chatRooms]);
 
-    // ******************************** TODO ********************************
 
-    // Online/offline users in a list attached to each chat room
     return (
 
         <>

@@ -35,12 +35,6 @@ builder.WebHost.ConfigureKestrel(options =>
 
 var app = builder.Build();
 
-app.UseDefaultFiles();
-app.UseStaticFiles();
-
-app.UseSwagger();
-app.UseSwaggerUI();
-
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -54,6 +48,8 @@ else
 
 app.UseCors("AllowReactClient");
 app.UseHttpsRedirection();
+app.UseDefaultFiles();
+app.UseStaticFiles();
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();

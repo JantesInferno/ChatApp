@@ -14,13 +14,18 @@ const ChatRoom = ({ connection, chatRoom, userOnline }) => {
         if (newMessage.trim() === "") {
             return;
         }
-        try {
-            await connection.invoke("SendMessage", newMessage, chatRoom.Name);
-            await connection.invoke("DeactivateTypingIndicator", chatRoom.Name);
-            setNewMessage('');
-        } catch (error) {
-            console.error("Error sending message:", error);
-        }
+
+        await connection.invoke("SendMessage", newMessage, chatRoom.Name)
+            .catch(err => {
+                console.error(err.toString());
+                alert(err.message);
+        });
+        await connection.invoke("DeactivateTypingIndicator", chatRoom.Name)
+            .catch(err => {
+                console.error(err.toString());
+                alert(err.message);
+        });
+        setNewMessage('');
     }
 
     // handle form submit by clicking button
@@ -40,9 +45,17 @@ const ChatRoom = ({ connection, chatRoom, userOnline }) => {
     // handle current message and ping SignalR hub indicating typing status
     const handleOnChange = (e) => {
         if (e.target.value)
-            connection.invoke("ActivateTypingIndicator", chatRoom.Name);
+            connection.invoke("ActivateTypingIndicator", chatRoom.Name)
+                .catch(err => {
+                    console.error(err.toString());
+                    alert(err.message);
+            });
         else 
-            connection.invoke("DeactivateTypingIndicator", chatRoom.Name);
+            connection.invoke("DeactivateTypingIndicator", chatRoom.Name)
+                .catch(err => {
+                    console.error(err.toString());
+                    alert(err.message);
+            });
 
         setNewMessage(e.target.value);
     }

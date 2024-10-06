@@ -105,7 +105,7 @@ namespace ChatApp.Server.Controllers
 
                 var token = new JwtSecurityToken(
                     claims: claims,
-                    expires: DateTime.Now.AddMinutes(30),
+                    expires: DateTime.Now.AddHours(1),
                     signingCredentials: credentials
                 );
 

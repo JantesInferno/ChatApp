@@ -25,7 +25,21 @@ namespace ChatApp.Server.Hubs
             _mapper = mapper;
         }
 
-        public async Task UpdateOnlineStatus(string username, bool online)
+        private string GetValidatedUsername()
+        {
+            var username = Context.User?.Identity?.Name;
+
+            if (username == null)
+            {
+                _logger.LogWarning("User token is invalid. Aborting connection.");
+                Context.Abort();
+                throw new HubException("Unauthorized user.");
+            }
+
+            return username;
+        }
+
+        private async Task UpdateOnlineStatus(string username, bool online)
         {
             User user = await _context.Users.Include(u => u.ChatRooms)
                                             .SingleAsync(u => u.UserName == username);
@@ -49,13 +63,7 @@ namespace ChatApp.Server.Hubs
         {
             try
             {
-                var username = Context.User!.Identity!.Name;
-
-                if (username == null)
-                {
-                    _logger.LogInformation($"User token is invalid.");
-                    throw new UnauthorizedAccessException();
-                }
+                string username = GetValidatedUsername();
 
                 _logger.LogInformation($"User {username} has connected.");
 
@@ -63,134 +71,197 @@ namespace ChatApp.Server.Hubs
 
                 await FetchChatData();
             }
+            catch (HubException hubEx)
+            {
+                _logger.LogWarning(hubEx, $"Hub exception: {hubEx.Message}");
+                throw;
+            }
             catch (Exception ex)
             {
-                _logger.LogInformation($"Unexpected error: {ex.Message}");
+                _logger.LogError(ex, "Unexpected error occurred.");
             }
+
+            await base.OnConnectedAsync();
         }
 
         public override async Task OnDisconnectedAsync(Exception? exception)
         {
             try
             {
-                var username = Context.User!.Identity!.Name;
-
-                if ( username == null )
-                {
-                    _logger.LogInformation($"User token is invalid.");
-                    throw new UnauthorizedAccessException();
-                }
-
-                _logger.LogInformation($"User {username} has disconnected.");
+                string username = GetValidatedUsername();
 
                 await UpdateOnlineStatus(username, false);
 
-                await base.OnDisconnectedAsync(exception);
+                if (exception != null)
+                {
+                    _logger.LogWarning(exception, $"User {username} disconnected due to an error: {exception.Message}");
+                }
+                else
+                {
+                    _logger.LogInformation($"User {username} disconnected.");
+                }
+            }
+            catch (HubException hubEx)
+            {
+                _logger.LogWarning(hubEx, $"Hub exception: {hubEx.Message}");
+                throw;
             }
             catch (Exception ex)
             {
-                _logger.LogInformation($"Unexpected error: {ex.Message}");
+                _logger.LogError(ex, "Unexpected error occurred.");
+            }
+            finally
+            {
+                await base.OnDisconnectedAsync(exception);
             }
         }
 
         public async Task JoinChatRoom(string chatRoomId)
         {
-            var username = Context.User!.Identity!.Name;
-
-            User user = await _context.Users.Include(u => u.ChatRooms)
-                                            .SingleAsync(u => u.UserName == username);
-
-
-            ChatRoom room = await _context.ChatRooms.Include(cr => cr.Users)
-                                                    .SingleAsync(cr => cr.Id.ToString() == chatRoomId);
-
-            if (room.Users.Any(u => u.Id == user.Id))
+            try
             {
-                _logger.LogInformation($"User {username} is already in chat room '{room.Name}'.");
-                return;
+                string username = GetValidatedUsername();
+
+                User user = await _context.Users.Include(u => u.ChatRooms)
+                                                .SingleAsync(u => u.UserName == username);
+
+                ChatRoom room = await _context.ChatRooms.Include(cr => cr.Users)
+                                                        .SingleAsync(cr => cr.Id.ToString() == chatRoomId);
+
+                if (room.Users.Any(u => u.Id == user.Id))
+                {
+                    _logger.LogInformation($"User {username} is already in chat room '{room.Name}'.");
+                    return;
+                }
+
+                room.Users.Add(user);
+                await _context.SaveChangesAsync();
+
+                _logger.LogInformation($"User {username} joined chat room '{room.Name}'.");
+
+                await Clients.Group(room.Name).SendAsync("ReceiveMessage", $"{user.UserName} has joined the chat room.");
             }
-
-            room.Users.Add(user);
-            await _context.SaveChangesAsync();
-
-            _logger.LogInformation($"User {username} joined chat room '{room.Name}'.");
-
-            await Clients.Group(room.Name).SendAsync("ReceiveMessage", $"{user.UserName} has joined the chat room.");
+            catch (HubException hubEx)
+            {
+                _logger.LogWarning(hubEx, $"Hub exception: {hubEx.Message}");
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error occured.");
+            }
         }
 
         public async Task FetchChatData()
         {
-            var username = Context.User!.Identity!.Name;
-
-            User user = await _context.Users.Include(u => u.ChatRooms)
-                                            .ThenInclude(cr => cr.ChatMessages)
-                                            .Include(u => u.ChatRooms)
-                                            .ThenInclude(cr => cr.Users)
-                                            .SingleAsync(u => u.UserName == username);
-
-            if (user.ChatRooms != null)
+            try
             {
-                List<ChatRoomDTO> chatRooms = _mapper.Map<List<ChatRoom>, List<ChatRoomDTO>>(user.ChatRooms);
+                string username = GetValidatedUsername();
 
-                user.ChatRooms.ForEach(x =>
+                User user = await _context.Users.Include(u => u.ChatRooms)
+                                .ThenInclude(cr => cr.ChatMessages)
+                                .Include(u => u.ChatRooms)
+                                .ThenInclude(cr => cr.Users)
+                                .SingleAsync(u => u.UserName == username);
+
+                if (user.ChatRooms != null)
                 {
-                    Groups.AddToGroupAsync(Context.ConnectionId, x.Name);
-                });
+                    List<ChatRoomDTO> chatRooms = _mapper.Map<List<ChatRoom>, List<ChatRoomDTO>>(user.ChatRooms);
 
-                chatRooms.ForEach(x =>
-                {
-                    x.ChatMessages = x.ChatMessages.OrderBy(cm => cm.DateTime).ToList();
-                });
+                    user.ChatRooms.ForEach(x =>
+                    {
+                        Groups.AddToGroupAsync(Context.ConnectionId, x.Name);
+                    });
 
+                    chatRooms.ForEach(x =>
+                    {
+                        x.ChatMessages = x.ChatMessages.OrderBy(cm => cm.DateTime).ToList();
+                    });
 
-                var chatRoomsJson = JsonConvert.SerializeObject(chatRooms);
+                    var chatRoomsJson = JsonConvert.SerializeObject(chatRooms);
 
-                _logger.LogInformation($"Fetching chat data for {username}.");
+                    _logger.LogInformation($"Fetching chat data for {username}.");
 
-                await Clients.Client(Context.ConnectionId).SendAsync("ReceiveData", chatRoomsJson);
+                    await Clients.Client(Context.ConnectionId).SendAsync("ReceiveData", chatRoomsJson);
+                }
+            }
+            catch (HubException hubEx)
+            {
+                _logger.LogWarning(hubEx, $"Hub exception: {hubEx.Message}");
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error occurred.");
             }
         }
 
         public async Task SendMessage(string message, string chatRoom)
         {
-            var username = Context.User!.Identity!.Name;
-
-            ChatMessage chatMessage = new ChatMessage(username!, message);
-            var json = JsonConvert.SerializeObject(chatMessage);
-
-            _logger.LogInformation($"User {username} sent message: {message}");
-
-            ChatRoom room = _context.ChatRooms.FirstOrDefault(x => x.Name == chatRoom)!;
-
-            if (room != null)
+            try
             {
-                if (room.ChatMessages == null)
-                    room.ChatMessages = new List<ChatMessage>();
+                string username = GetValidatedUsername();
+
+                ChatRoom room = _context.ChatRooms.FirstOrDefault(x => x.Name == chatRoom)!;
+                ChatMessage chatMessage = new ChatMessage(username, message);
 
                 room.ChatMessages.Add(chatMessage);
                 _context.ChatMessages.Add(chatMessage);
                 await _context.SaveChangesAsync();
-            }
 
-            await Clients.Group(chatRoom).SendAsync("ReceiveChatMessage", json);
+                var json = JsonConvert.SerializeObject(chatMessage);
+
+                _logger.LogInformation($"User {username} sent message: {message}");
+
+                await Clients.Group(chatRoom).SendAsync("ReceiveChatMessage", json);
+            }
+            catch (HubException hubEx)
+            {
+                _logger.LogWarning(hubEx, $"Hub exception: {hubEx.Message}");
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error in SendMessage.");
+            }
         }
 
         public async Task ActivateTypingIndicator(string chatRoomName)
         {
-            var username = Context.User!.Identity!.Name;
+            try
+            {
+                string username = GetValidatedUsername();
 
-            _logger.LogInformation($"User {username} started typing");
-
-            await Clients.GroupExcept(chatRoomName, Context.ConnectionId).SendAsync($"ReceiveTypingIndicatorOn_{chatRoomName}", username);
+                await Clients.GroupExcept(chatRoomName, Context.ConnectionId).SendAsync($"ReceiveTypingIndicatorOn_{chatRoomName}", username);
+            }
+            catch (HubException hubEx)
+            {
+                _logger.LogWarning(hubEx, $"Hub exception: {hubEx.Message}");
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error occurred.");
+            }
         }
 
         public async Task DeactivateTypingIndicator(string chatRoomName)
         {
-            var username = Context.User!.Identity!.Name;
+            try
+            {
+                string username = GetValidatedUsername();
 
-            _logger.LogInformation($"User {username} stopped typing");
-
-            await Clients.GroupExcept(chatRoomName, Context.ConnectionId).SendAsync($"ReceiveTypingIndicatorOff_{chatRoomName}", username);
+                await Clients.GroupExcept(chatRoomName, Context.ConnectionId).SendAsync($"ReceiveTypingIndicatorOff_{chatRoomName}", username);
+            }
+            catch (HubException hubEx)
+            {
+                _logger.LogWarning(hubEx, $"Hub exception: {hubEx.Message}");
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error occurred.");
+            }
         }
     }
 }

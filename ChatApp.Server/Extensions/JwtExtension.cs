@@ -20,15 +20,12 @@ namespace ChatApp.Server.Extensions
                         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config.GetSection("Jwt")["SecretKey"]!))
                     };
 
-                    // Handle the JWT in the SignalR connection
                     options.Events = new JwtBearerEvents
                     {
                         OnMessageReceived = context =>
                         {
-                            // Check for the access token in the query string
                             var accessToken = context.Request.Query["access_token"];
 
-                            // If found, set it
                             if (!string.IsNullOrEmpty(accessToken) && context.HttpContext.Request.Path.StartsWithSegments("/chathub"))
                             {
                                 context.Token = accessToken;
