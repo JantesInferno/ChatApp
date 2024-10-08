@@ -2,6 +2,7 @@
 /* eslint-disable react/prop-types */
 import './chatroom.css';
 import { useState, useEffect } from 'react';
+import { encryptMessage, decryptMessage, formatDay, sanitizeHtml, sortUsers } from '../../utils.js';
 
 const ChatRoom = ({ connection, chatRoom, userOnline }) => {
     const [chatMessages, setChatMessages] = useState([]);
@@ -15,7 +16,18 @@ const ChatRoom = ({ connection, chatRoom, userOnline }) => {
             return;
         }
 
-        await connection.invoke("SendMessage", newMessage, chatRoom.Name)
+        console.log(newMessage);
+
+        let encryptedMessage;
+
+        try {
+            encryptedMessage = encryptMessage(newMessage);
+        } catch (error) {
+            console.error('Encryption error:', error);
+            return;
+        }
+
+        await connection.invoke("SendMessage", encryptedMessage, chatRoom.Name)
             .catch(err => {
                 console.error(err.toString());
                 alert(err.message);
@@ -60,86 +72,59 @@ const ChatRoom = ({ connection, chatRoom, userOnline }) => {
         setNewMessage(e.target.value);
     }
 
-    // escape html characters
-    const sanitizeHtml = (text) => {
-        return text.replace(/&/g, "&amp;")
-                   .replace(/</g, "&lt;")
-                   .replace(/>/g, "&gt;")
-                   .replace(/"/g, "&quot;")
-                   .replace(/'/g, "&#039;");
-    }
-
-    // check if message's date is the current date
-    function checkDay(messageDate) {
-        var date = messageDate.getDate(),
-            diffDays = new Date().getDate() - date,
-            diffMonths = new Date().getMonth() - messageDate.getMonth(),
-            diffYears = new Date().getFullYear() - messageDate.getFullYear();
-
-        if (diffYears === 0 && diffDays === 0 && diffMonths === 0)
-            return "today";
-        else if (diffYears === 0 && diffDays === 1)
-            return "yesterday";
-
-        return null;
-    }
-
-    const sortUsers = (users) => {
-        const sortedUsers = users.sort(function (a, b) {
-            if (a.Username.toLowerCase() < b.Username.toLowerCase()) return -1;
-            if (a.Username.toLowerCase() > b.Username.toLowerCase()) return 1;
-            return 0;
-        });
-
-        return sortedUsers;
-    }
-
     // SignalR methods for receiving data
     useEffect(() => {
+        if (connection && chatRoom?.Name) {
 
-        const typingOnEvent = `ReceiveTypingIndicatorOn_${chatRoom.Name}`;
-        const typingOffEvent = `ReceiveTypingIndicatorOff_${chatRoom.Name}`;
+            connection.on(`ReceiveTypingIndicatorOn_${chatRoom.Name}`, (user) => {
+                setUsersTyping((prev) => {
+                    const found = prev.find((username) => username === user);
+                    if (!found) {
+                        return [...prev, user];
+                    }
+                    return prev;
+                });
+            });
 
-        connection.on(typingOnEvent, (user) => {
-            setUsersTyping((prev) => {
-                const found = prev.find((username) => username === user);
-                if (!found) {
-                    return [...prev, user];
+            connection.on(`ReceiveTypingIndicatorOff_${chatRoom.Name}`, (user) => {
+                setUsersTyping((prev) => {
+                    return prev.filter((username) => username !== user);
+                });
+            });
+
+            connection.on("ReceiveChatMessage", (msg) => {
+                const obj = JSON.parse(msg);
+
+                try {
+                    obj.Message = decryptMessage(obj.Message);
+                } catch (error) {
+                    console.error('Decryption error:', error);
+                    return;
                 }
-                return prev;
+
+                let date = new Date(Date.parse(obj.DateTime));
+
+                const day = formatDay(date)
+                if (day)
+                    date = `${day} at ${(date.getHours() < 10 ? '0' : '') + date.getHours()}:${(date.getMinutes() < 10 ? '0' : '') + date.getMinutes()}`;
+                else
+                    date = obj.ShortDate;
+
+                obj.DateTime = date;
+
+                setChatMessages(prevChatMessages => {
+                    const filteredChatMessages = prevChatMessages.filter(x => x.Id !== obj.Id);
+                    return [...filteredChatMessages, obj];
+                });
             });
-        });
-        
-        connection.on(typingOffEvent, (user) => {
-            setUsersTyping((prev) => {
-                return prev.filter((username) => username !== user);
-            });
-        });
 
-        connection.on("ReceiveChatMessage", (msg) => {
-            let obj = JSON.parse(msg);
-            let date = new Date(Date.parse(obj.DateTime));
-
-            let day = checkDay(date)
-            if (day)
-                date = `${day} at ${(date.getHours() < 10 ? '0' : '') + date.getHours()}:${(date.getMinutes() < 10 ? '0' : '') + date.getMinutes()}`;
-            else 
-                date = obj.ShortDate;
-
-            obj.DateTime = date;
-
-            setChatMessages(prevChatMessages => {
-                let filteredChatMessages = prevChatMessages.filter(x => x.Id !== obj.Id);
-                return [...filteredChatMessages, obj];
-            });
-        });
-
-        return () => {
-            connection.off(typingOnEvent);
-            connection.off(typingOffEvent);
-            connection.off("ReceiveChatMessage");
-        };
-    }, [connection, chatRoom.Name]);
+            return () => {
+                connection.off(`ReceiveTypingIndicatorOn_${chatRoom.Name}`);
+                connection.off(`ReceiveTypingIndicatorOff_${chatRoom.Name}`);
+                connection.off("ReceiveChatMessage");
+            };
+        }
+    }, [connection, chatRoom?.Name]);
 
     // automatically scroll down chat to last message
     useEffect(() => {
@@ -158,7 +143,7 @@ const ChatRoom = ({ connection, chatRoom, userOnline }) => {
     useEffect(() => {
         if (userOnline) {
             setUsers((prevUsers) => {
-                let filteredUsers = prevUsers.filter(u => u.Username !== userOnline.Username);
+                const filteredUsers = prevUsers.filter(u => u.Username !== userOnline.Username);
                 const updatedUsers = [...filteredUsers, userOnline];
                 return sortUsers(updatedUsers);
             });
@@ -185,7 +170,7 @@ const ChatRoom = ({ connection, chatRoom, userOnline }) => {
                                                 <span key={msg.Username} className="chatbox-message-sender-text">{sanitizeHtml(msg.Username)}</span>
                                                 <span key={msg.DateTime} className="chatbox-message-item-time">{msg.DateTime}</span>
                                             </div>
-                                            <div key={msg.Id + msg.Message} className="chatbox-message-item sent">
+                                            <div key={msg.Id + msg.Message} className="chatbox-message-item-sent">
                                                 <span key={sanitizeHtml(msg.Message)} className="chatbox-message-item-text">
                                                     {msg.Message}
                                                 </span>
@@ -224,8 +209,8 @@ const ChatRoom = ({ connection, chatRoom, userOnline }) => {
                                 null
                     }
     
-                </div>
-
+                </div>  
+                <div className="users-status-panel selector">
                     <div className="users-status-list selector">
                         <div className="users-status-list-header">
                             Members - {users.length}
@@ -245,6 +230,7 @@ const ChatRoom = ({ connection, chatRoom, userOnline }) => {
 
                             );
                         })}
+                    </div>
                     <button className="invite-link-button" onClick={() => navigator.clipboard.writeText(`${window.location.origin}/chat/${chatRoom.Id}`)}>
                         Invitation link
                         <svg xmlns="http://www.w3.org/2000/svg" className="icon icon-tabler icon-tabler-copy" width="22" height="22" viewBox="0 0 24 24" strokeWidth="2" stroke="#ffffff" fill="none" strokeLinecap="round" strokeLinejoin="round">
@@ -253,7 +239,7 @@ const ChatRoom = ({ connection, chatRoom, userOnline }) => {
                             <path d="M4.012 16.737a2.005 2.005 0 0 1 -1.012 -1.737v-10c0 -1.1 .9 -2 2 -2h10c.75 0 1.158 .385 1.5 1" />
                         </svg>
                     </button>
-                    </div>
+                </div>
             </div>
             <div className="chatroom-form-container selector">
                 <form onSubmit={handleSubmit} action="#" className="chatroom-message-form">

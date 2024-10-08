@@ -2,8 +2,10 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { HubConnectionBuilder, LogLevel } from '@microsoft/signalr';
+import { decryptMessage, formatDay } from '../../utils.js';
 import ChatRoom from "../chatroom/ChatRoom";
 import ChatRoomTab from "../chatroom-tab/ChatRoomTab";
+import CreateChatRoom from '../create-chatroom/CreateChatRoom.jsx';
 import './chatOverview.css';
 
 
@@ -13,6 +15,7 @@ const ChatOverview = () => {
     const [chatRooms, setChatRooms] = useState([]);
     const [activeChatRoomId, setActiveChatRoomId] = useState();
     const [userOnline, setUserOnline] = useState();
+    const [hasJoinedRoom, setHasJoinedRoom] = useState(false);
 
     const { chatRoomIdFromUrl } = useParams();
     const navigate = useNavigate();
@@ -24,19 +27,30 @@ const ChatOverview = () => {
             refreshChatRooms();
     };
 
+    const createChatRoom = async (chatRoomName) => {
+        console.log(chatRoomName);
+
+        await connection.invoke("CreateChatRoom", chatRoomName)
+            .catch(err => {
+                console.error(err.toString());
+                alert(err.message);
+            });
+    }
+
     const usersOnline = (chatRoom) => {
         return chatRoom.Users.filter(user => user.IsOnline == true);
     }
 
     const joinChatRoom = async (chatRoomId) => {
-        if (chatRoomId) {
+        if (chatRoomId && !hasJoinedRoom) {
             await connection.invoke("JoinChatRoom", chatRoomId)
                 .catch(err => {
                     console.error(err.toString());
                     alert(err.message);
-            });
-            refreshChatRooms();
+                    return;
+                });
             setActiveChatRoomId(chatRoomId);
+            refreshChatRooms();
         }
     };
 
@@ -48,21 +62,6 @@ const ChatOverview = () => {
                     alert(err.message);
             });
         }
-    }
-
-    // check if message's date is the current date
-    function formatDay(messageDate) {
-        var date = messageDate.getDate(),
-            diffDays = new Date().getDate() - date,
-            diffMonths = new Date().getMonth() - messageDate.getMonth(),
-            diffYears = new Date().getFullYear() - messageDate.getFullYear();
-
-        if (diffYears === 0 && diffDays === 0 && diffMonths === 0)
-            return "today";
-        else if (diffYears === 0 && diffDays === 1)
-            return "yesterday";
-
-        return null;
     }
 
     // set up connection to SignalR hub with token
@@ -101,20 +100,30 @@ const ChatOverview = () => {
                         setUserOnline(JSON.parse(user));
                     });
                     connection.on("ReceiveData", (data) => {
-                        let obj = JSON.parse(data);
+                        const obj = JSON.parse(data);
 
                         obj.forEach(x => {
-                            x.ChatMessages.forEach(y => {
-                                var date = new Date(Date.parse(y.DateTime));
+                            x.ChatMessages.forEach(cm => {
+                                console.log("meddelande innan dekryptering:", cm.Message)
 
-                                let day = formatDay(date)
+                                try {
+                                    cm.Message = decryptMessage(cm.Message);
+                                } catch (error) {
+                                    console.error('Decryption error:', error);
+                                    return;
+                                }
+
+                                console.log("meddelande efter dekryptering:", cm.Message)
+
+                                let date = new Date(Date.parse(cm.DateTime));
+
+                                const day = formatDay(date)
                                 if (day)
-                                    date = `${day} at ${(date.getHours() < 10 ? '0' : '') + date.getHours()}:
-                                                    ${(date.getMinutes() < 10 ? '0' : '') + date.getMinutes()}`;
+                                    date = `${day} at ${(date.getHours() < 10 ? '0' : '') + date.getHours()}:${(date.getMinutes() < 10 ? '0' : '') + date.getMinutes()}`;
                                 else 
-                                    date = y.ShortDate;
+                                    date = cm.ShortDate;
 
-                                y.DateTime = date;
+                                cm.DateTime = date;
                             })
                         })
                             
@@ -131,19 +140,28 @@ const ChatOverview = () => {
         }
     }, [connection]);
 
-    // Set active chat room when `chatRooms` or `chatRoomIdFromUrl` changes
+    // Set active chat room when chatRooms changes
     useEffect(() => {
-        if (connection && chatRoomIdFromUrl && chatRoomIdFromUrl.toLowerCase() != activeChatRoomId) {
-            const room = chatRooms.find((room) => room.Id == chatRoomIdFromUrl);
+        if (
+            connection &&
+            chatRoomIdFromUrl &&
+            chatRoomIdFromUrl.toLowerCase() !== activeChatRoomId &&
+            !hasJoinedRoom
+        ) {
+            const room = chatRooms.find((room) => room.Id === chatRoomIdFromUrl);
             if (room) {
                 setActiveChatRoomId(chatRoomIdFromUrl.toLowerCase());
+                setHasJoinedRoom(true);
             } else {
-                joinChatRoom(chatRoomIdFromUrl);
+                joinChatRoom(chatRoomIdFromUrl).then(() => {
+                    setHasJoinedRoom(true);
+                });
             }
         } else if (chatRooms.length > 0 && !activeChatRoomId) {
             setActiveChatRoomId(chatRooms[0].Id);
+            setHasJoinedRoom(true);
         }
-    }, [chatRooms]);
+    }, [chatRooms, chatRoomIdFromUrl, activeChatRoomId, hasJoinedRoom]);
 
 
     return (
@@ -158,14 +176,13 @@ const ChatOverview = () => {
 
                 
                 </div>
-
-                <button className="test selector">
-                    Create New Chat Room
-                </button>
+                {chatRooms.length > 0 && (
+                    <CreateChatRoom createChatRoom={createChatRoom} />
+                )}
 
             </div>
 
-            {/* Render currently active chat room */}
+            {/* Render current active chat room */}
             {connection && chatRooms.length > 0 && activeChatRoomId && (
                 <ChatRoom
                     key={activeChatRoomId}

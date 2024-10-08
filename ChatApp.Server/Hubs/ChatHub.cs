@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using ChatApp.Server.Core.Utils;
 using ChatApp.Server.Data.Contexts;
 using ChatApp.Server.Domain.DTO;
 using ChatApp.Server.Domain.Entities;
@@ -31,7 +32,7 @@ namespace ChatApp.Server.Hubs
 
             if (username == null)
             {
-                _logger.LogWarning("User token is invalid. Aborting connection.");
+                _logger.LogWarning("User token is invalid.");
                 Context.Abort();
                 throw new HubException("Unauthorized user.");
             }
@@ -138,8 +139,6 @@ namespace ChatApp.Server.Hubs
                 await _context.SaveChangesAsync();
 
                 _logger.LogInformation($"User {username} joined chat room '{room.Name}'.");
-
-                await Clients.Group(room.Name).SendAsync("ReceiveMessage", $"{user.UserName} has joined the chat room.");
             }
             catch (HubException hubEx)
             {
@@ -148,7 +147,45 @@ namespace ChatApp.Server.Hubs
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Unexpected error occured.");
+                _logger.LogError(ex, "Unexpected error occurred.");
+            }
+        }
+
+        public async Task CreateChatRoom(string chatRoomName)
+        {
+            try
+            {
+                string username = GetValidatedUsername();
+
+                User user = await _context.Users.Include(u => u.ChatRooms)
+                                                .SingleAsync(u => u.UserName == username);
+
+                var roomExists = await _context.ChatRooms.FirstOrDefaultAsync(cr => cr.Name.ToLower() == chatRoomName.ToLower());
+
+                if (roomExists == null)
+                {
+                    ChatRoom room = new ChatRoom(chatRoomName);
+                    room.Users.Add(user);
+                    await _context.ChatRooms.AddAsync(room);
+                    await _context.SaveChangesAsync();
+
+                    await FetchChatData();
+                }
+                else
+                {
+                    throw new HubException("Chat room already exists.");
+                }
+
+                _logger.LogInformation($"User {username} created chat room '{chatRoomName}'.");
+            }
+            catch (HubException hubEx)
+            {
+                _logger.LogWarning(hubEx, $"Hub exception: {hubEx.Message}");
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error occurred.");
             }
         }
 
@@ -168,14 +205,22 @@ namespace ChatApp.Server.Hubs
                 {
                     List<ChatRoomDTO> chatRooms = _mapper.Map<List<ChatRoom>, List<ChatRoomDTO>>(user.ChatRooms);
 
-                    user.ChatRooms.ForEach(x =>
+                    chatRooms.ForEach(cr =>
                     {
-                        Groups.AddToGroupAsync(Context.ConnectionId, x.Name);
+                        Groups.AddToGroupAsync(Context.ConnectionId, cr.Name);
                     });
 
-                    chatRooms.ForEach(x =>
+                    chatRooms.ForEach(cr =>
                     {
-                        x.ChatMessages = x.ChatMessages.OrderBy(cm => cm.DateTime).ToList();
+                        //cr.ChatMessages.ForEach(cm =>
+                        //{
+                        //    if (!EncryptionUtil.IsBase64String(cm.Message))
+                        //    {
+                        //        cm.Message = EncryptionUtil.Encrypt(cm.Message);
+                        //    }
+                        //});
+
+                        cr.ChatMessages = cr.ChatMessages.OrderBy(cm => cm.DateTime).ToList();
                     });
 
                     var chatRoomsJson = JsonConvert.SerializeObject(chatRooms);
@@ -222,7 +267,7 @@ namespace ChatApp.Server.Hubs
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Unexpected error in SendMessage.");
+                _logger.LogError(ex, "Unexpected error occurred.");
             }
         }
 

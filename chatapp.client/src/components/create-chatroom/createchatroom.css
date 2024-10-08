@@ -1,0 +1,63 @@
+.create-chatroom-container {
+    position: relative;
+    align-self: flex-end;
+}
+
+.create-chatroom-button-popup {
+    margin: 0.5rem 0;
+    font-size: 0.9rem;
+    color: var(--white);
+    background: linear-gradient(115deg, #3a2e42, #21122b);
+    border-radius: 0.5rem;
+    border: 1px solid transparent;
+    outline: none;
+    cursor: pointer;
+    min-width: 12rem;
+}
+
+.create-chatroom-button-popup:hover, .create-chatroom-button-submit:hover {
+    background: #21122b;
+}
+
+.create-chatroom-popup {
+    position:center;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 0.5rem;
+    min-width: 10rem;
+    margin: 0.5rem 0;
+}
+
+.create-chatroom-form {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.5rem;
+}
+.create-chatroom-input {
+    font-size: 1rem;
+    color: var(--white);
+    background: #111;
+    border-radius: 0.5rem;
+    border: 1px solid #333;
+    outline: none;
+    resize: none;
+    padding: 0.3rem;
+    scrollbar-width: none;
+    width: 100%;
+    max-width: 15rem;
+    height: 1.75rem;
+    padding-left: 1rem;
+}
+
+.create-chatroom-button-submit {
+    font-size: 0.9rem;
+    color: var(--white);
+    background: linear-gradient(115deg, #3a2e42, #21122b);
+    border-radius: 0.5rem;
+    outline: none;
+    cursor: pointer;
+}
