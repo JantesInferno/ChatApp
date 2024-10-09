@@ -1,9 +1,11 @@
 /* eslint-disable react/prop-types */
 import './chatroom.css';
 import { useState, useEffect } from 'react';
-import { encryptMessage, decryptMessage, formatDay, sanitizeHtml, sortUsers } from '../../utils.js';
+import { encryptMessage, decryptMessage, formatDay, sortUsers } from '../../utils.js';
+import ChatMessages from '../chatmessages/ChatMessages';
+import UserList from '../userlist/UserList';
 
-const ChatRoom = ({ connection, chatRoom, userOnline }) => {
+const ChatRoom = ({ connection, chatRoom, userOnline, openDms, setOpenDms, toggledDms, setToggledDms }) => {
     const [chatMessages, setChatMessages] = useState([]);
     const [users, setUsers] = useState([]);
     const [newMessage, setNewMessage] = useState("");
@@ -14,8 +16,6 @@ const ChatRoom = ({ connection, chatRoom, userOnline }) => {
         if (newMessage.trim() === "") {
             return;
         }
-
-        console.log(newMessage);
 
         let encryptedMessage;
 
@@ -158,79 +158,20 @@ const ChatRoom = ({ connection, chatRoom, userOnline }) => {
             <div className="chatroom-main">
                 <div className="chatroom-side-panel selector">
                 </div>
-                <div className="chatbox-message-content">
-                    <div className="chatbox-message-list">
-                        {
-                            chatRoom && chatMessages.length > 0
-                                ?
-                                chatMessages.map((msg) => {
-                                    return (
-                                        <div key={msg.Id} className="chatbox-message-item">
-                                            <div key={msg.Id + msg.Username} className="chatbox-message-sender">
-                                                <span key={msg.Username} className="chatbox-message-sender-text">{sanitizeHtml(msg.Username)}</span>
-                                                <span key={msg.DateTime} className="chatbox-message-item-time">{msg.DateTime}</span>
-                                            </div>
-                                            <div key={msg.Id + msg.Message} className="chatbox-message-item-sent">
-                                                <span key={sanitizeHtml(msg.Message)} className="chatbox-message-item-text">
-                                                    {msg.Message}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    )
-                                })
-                                :
-                                <div className="chatbox-message-empty">
-                                    <span>Wow, such empty</span>
-                                </div>
-                        }
-                    </div>
 
-                    {
-                        usersTyping.length > 0
-                            ?
-                                <div className="chatbox-typing-indicator">
-                                    <div className="chatbox-message-typing">
-                                        <div className="typing">
-                                            <span></span>
-                                            <span></span>
-                                            <span></span>
-                                        </div>
-                                        {
-                                            usersTyping.map((user, idx) => {
-                                                return (
-                                                    <span key={user}>&nbsp;{user} {idx == usersTyping.length - 1 ? '' : ','}</span>
-                                                )
-                                            })
-                                        }
-                                        <span>&nbsp;is typing...</span>
-                                    </div>
-                                </div>
-                            :
-                                null
-                    }
-    
-                </div>  
+                <ChatMessages chatRoom={chatRoom} chatMessages={chatMessages} usersTyping={usersTyping} />
+
                 <div className="users-status-panel selector">
-                    <div className="users-status-list selector">
-                        <div className="users-status-list-header">
-                            Members - {users.length}
-                        </div>
-                        {chatRoom && users && users.map((user) => {
-                            return (
-                                <div key={user.Username} className="user-status">
-                                    <div className="user-status-icon"
-                                        style={{
-                                            background: user.IsOnline
-                                                ? 'linear-gradient(90deg, #0e4206, #37a127)'
-                                                : 'linear-gradient(90deg, #4d1111, #b53a3a)'
-                                        }}
-                                    ></div>
-                                    {user.Username}
-                                </div>
 
-                            );
-                        })}
-                    </div>
+                    <UserList
+                        chatRoom={chatRoom}
+                        users={users}
+                        openDms={openDms}
+                        setOpenDms={setOpenDms}
+                        toggledDms={toggledDms}
+                        setToggledDms={setToggledDms}
+                    />
+
                     <button className="invite-link-button" onClick={() => navigator.clipboard.writeText(`${window.location.origin}/chat/${chatRoom.Id}`)}>
                         Invitation link
                         <svg xmlns="http://www.w3.org/2000/svg" className="icon icon-tabler icon-tabler-copy" width="22" height="22" viewBox="0 0 24 24" strokeWidth="2" stroke="#ffffff" fill="none" strokeLinecap="round" strokeLinejoin="round">

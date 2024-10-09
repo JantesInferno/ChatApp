@@ -1,0 +1,142 @@
+.chatbox-message-content {
+    position: relative;
+    background: #0a0a0a;
+    display: flex;
+    flex-direction: column;
+    grid-row-gap: 0rem;
+    overflow-y: auto;
+    height: 55vh;
+    width: 100%;
+    padding-bottom: 0;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.chatbox-message-content::-webkit-scrollbar {
+    display: none;
+}
+
+.chatbox-message-sender {
+    text-align: left;
+    width: auto;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.chatbox-message-list {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.chatbox-message-empty {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+}
+
+.chatbox-message-item {
+    margin-bottom: 0.5rem;
+    border-radius: 0.5rem;
+    background: #140b17;
+    display: flex;
+    flex-direction: column;
+    justify-self: center;
+    width: auto;
+    padding: 1rem;
+    margin-left: 0.5rem;
+    margin-right: 0.5rem;
+    box-shadow: 0px 0px 10px black;
+}
+
+.chatbox-message-item:first-child {
+    margin-top: 0.5rem;
+}
+
+.chatbox-message-item:nth-child(even) {
+    background: #211326;
+}
+
+.chatbox-message-item-text {
+    text-align: left;
+    font-size: 0.9rem;
+}
+
+.chatbox-message-item-sent {
+    display: flex;
+    flex-direction: column;
+    justify-self: center;
+    width: auto;
+    padding: 1rem;
+    background: rgba(0,0,0, 0.25);
+    border-radius: 0.5rem;
+    margin: 0.5rem 0.5rem;
+    color: var(--white);
+}
+
+.chatbox-message-item-time {
+    margin-left: 0.5rem;
+    font-size: 0.7rem;
+    color: var(--grey-d-3);
+}
+
+.chatbox-typing-indicator {
+    position: sticky;
+    width: 100%;
+    bottom: 0;
+    left: 0;
+    background: #fff;
+    z-index: 999;
+    pointer-events: none;
+}
+
+.chatbox-message-typing {
+    display: flex;
+    color: var(--white);
+    font-size: 0.9rem;
+    background: #080808;
+    padding: 0.5rem 1.5rem;
+    width: 100%;
+}
+
+.typing {
+    position: relative;
+    margin-right: 1.75rem;
+}
+
+.typing span {
+    content: "";
+    animation: blink 1.5s infinite;
+    animation-fill-mode: both;
+    height: 0.3rem;
+    width: 0.3rem;
+    background: var(--white);
+    position: absolute;
+    border-radius: 50%;
+    bottom: 0.5rem;
+}
+
+.typing span:nth-child(2) {
+    animation-delay: 0.2s;
+    margin-left: 0.5rem;
+}
+
+.typing span:nth-child(3) {
+    animation-delay: 0.4s;
+    margin-left: 1rem;
+}
+
+@keyframes blink {
+    0% {
+        opacity: 0.1;
+    }
+
+    20% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0.1;
+    }
+}

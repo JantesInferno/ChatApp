@@ -37,25 +37,7 @@
     padding: 1rem 1rem;
 }
 
-.chatbox-message-profile {
-  display: flex;
-  align-items: center;
-  grid-gap: 0.5rem;
-  color: var(--dark);
-  font-size: 4rem;
-}
-
-.chatbox-message-name {
-  font-size: 1.125rem;
-  font-weight: 600;
-}
-
-.chatbox-message-status {
-  font-size: 0.875rem;
-  color: var(--grey-d-3);
-}
-
-.chatbox-message-content {
+/*.chatbox-message-content {
     position: relative;
     background: #0a0a0a;
     display: flex;
@@ -67,20 +49,20 @@
     padding-bottom: 0;
     scrollbar-width: none;
     -ms-overflow-style: none;
-}
+}*/
 
-.chatbox-message-empty {
+/*.chatbox-message-empty {
     display: flex;
     justify-content: center;
     align-items: center;
     height: 100%;
-}
+}*/
 
-.chatbox-message-content::-webkit-scrollbar {
+/*.chatbox-message-content::-webkit-scrollbar {
     display: none;
-}
+}*/
 
-.chatbox-message-sender {
+/*.chatbox-message-sender {
     text-align: left;
     width: auto;
     font-weight: 600;
@@ -156,7 +138,7 @@
     background: #080808;
     padding: 0.5rem 1.5rem;
     width: 100%;
-}
+}*/
 
 .chatroom-form-container {
     padding: 1rem 1rem 1rem 2rem;
@@ -210,7 +192,7 @@
     background: #21122b;
 }
 
-.typing {
+/*.typing {
     position: relative;
     margin-right: 1.75rem;
 }
@@ -232,52 +214,13 @@
 .typing span:nth-child(3) {
   animation-delay: 0.4s;
   margin-left: 1rem;
-}
+}*/
 
 .users-status-panel {
     display: flex;
     flex-direction: column;
     align-content: flex-start;
     justify-content: space-between;
-}
-
-.users-status-list {
-    padding: 0 1rem 3rem 1rem;
-    display: flex;
-    flex-direction: column;
-    align-content: flex-start;
-    justify-content: flex-start;
-    overflow-y: auto;
-    overflow-x: hidden;
-    min-width: 10rem;
-    height: 300px;
-    max-height: 410px;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
-}
-
-.users-status-list-header {
-    display: flex;
-    justify-content: center;
-    margin-left: 1rem;
-    margin-right: 2rem;
-    margin-bottom: 1rem;
-}
-
-.user-status {
-    padding: 0.1rem;
-    text-align: left;
-    margin-left: 1rem;
-}
-
-.user-status-icon {
-    border-radius: 50%;
-    width: 1rem;
-    height: 1rem;
-    display: inline-block;
-    margin-right: 0.5rem;
-    margin-bottom: -2px;
-    text-align: left;
 }
 
 .invite-link-button {
@@ -298,17 +241,3 @@
 .invite-link-button:hover {
     background: #21122b;
 }
-
-
-@keyframes blink {
-    0% {
-    opacity: 0.1;
-  }
-  20% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0.1;
-  }
-}
-

@@ -17,6 +17,9 @@ const ChatOverview = () => {
     const [userOnline, setUserOnline] = useState();
     const [hasJoinedRoom, setHasJoinedRoom] = useState(false);
 
+    const [openDms, setOpenDms] = useState([]);
+    const [toggledDms, setToggledDms] = useState([]);
+
     const { chatRoomIdFromUrl } = useParams();
     const navigate = useNavigate();
 
@@ -193,6 +196,10 @@ const ChatOverview = () => {
                     connection={connection}
                     chatRoom={chatRooms.find((room) => room.Id === activeChatRoomId)}
                     userOnline={userOnline}
+                    openDms={openDms}
+                    setOpenDms={setOpenDms}
+                    toggledDms={toggledDms}
+                    setToggledDms={setToggledDms}
                 />
             )}
         </>

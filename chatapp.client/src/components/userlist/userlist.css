@@ -1,0 +1,136 @@
+.users-status-list {
+    padding: 0 1rem 3rem 1rem;
+    display: flex;
+    flex-direction: column;
+    align-content: flex-start;
+    justify-content: flex-start;
+    overflow-y: auto;
+    overflow-x: hidden;
+    min-width: 10rem;
+    height: 300px;
+    max-height: 410px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.users-status-list-header {
+    display: flex;
+    justify-content: center;
+    margin-left: 1rem;
+    margin-right: 2rem;
+    margin-bottom: 1rem;
+}
+
+.user-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.1rem;
+    text-align: left;
+    margin-left: 1rem;
+    cursor: pointer;
+}
+
+.user-status-icon {
+    border-radius: 50%;
+    width: 1rem;
+    height: 1rem;
+    display: inline-block;
+    margin-right: 0.5rem;
+    margin-bottom: -2px;
+    text-align: left;
+}
+
+.dm-list {
+    display: flex;
+    align-items: flex-end; /* Align DMs at the bottom */
+    justify-content: flex-end;
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    gap: 0.5rem;
+    margin: 0 0.5rem 0.5rem 0.5rem;
+}
+
+.dm-container {
+    border-radius: 0.5rem;
+    box-shadow: 0px 0px 10px black;
+}
+
+.dm-expanded {
+    min-width: 250px;
+    max-width: 20vw;
+    max-height: 700px;
+}
+
+.dm-header {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem;
+    gap: 0.5rem;
+    cursor: pointer;
+    border-radius: 0.5rem;
+}
+
+.dm-user {
+    display: flex;
+    align-items: center;
+    height: 100%;
+}
+
+.dm-button-close {
+    margin: 0;
+    padding: 0.5rem;
+    display: flex;
+    align-items: center;
+    border: 1px solid transparent;
+}
+
+.dm-button-close:hover {
+    border: 1px solid #fff;
+}
+
+.dm-message-form {
+    display: flex;
+    width: auto;
+    margin: 0.5rem 1rem;
+    justify-content: center;
+    background: #0a0a0a;
+    border: 2px solid #4d4d4d;
+    color: var(--white);
+    border-radius: 1rem;
+    padding: 0.5rem 0.5rem 0.5rem 1.25rem;
+}
+
+.chatroom-message-input {
+    font-size: 0.9rem;
+    color: var(--white);
+    background: transparent;
+    outline: none;
+    border: none;
+    resize: none;
+    scrollbar-width: none;
+    margin-right: 1rem;
+}
+
+.chatroom-message-input::-webkit-scrollbar {
+    display: none;
+}
+
+.chatroom-message-submit {
+    align-self: flex-start;
+    font-size: 0.9rem;
+    color: var(--white);
+    background: linear-gradient(115deg, #3a2e42, #21122b);
+    border-radius: 0.5rem;
+    border: 1px solid transparent;
+    outline: none;
+    display: flex;
+    cursor: pointer;
+}
+
+.chatroom-message-submit:hover {
+    background: #21122b;
+}
