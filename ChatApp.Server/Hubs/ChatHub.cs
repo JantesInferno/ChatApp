@@ -121,7 +121,7 @@ namespace ChatApp.Server.Hubs
                                                 .SingleAsync(u => u.UserName == username);
 
                 ChatRoom room = await _context.ChatRooms.Include(cr => cr.Users)
-                                                        .SingleAsync(cr => cr.Id.ToString() == chatRoomId);
+                                                        .SingleAsync(cr => cr.Id.ToString().ToLower() == chatRoomId.ToLower());
 
                 if (room.Users.Any(u => u.Id == user.Id))
                 {
@@ -154,7 +154,7 @@ namespace ChatApp.Server.Hubs
                 User user = await _context.Users.Include(u => u.ChatRooms)
                                                 .SingleAsync(u => u.UserName == username);
 
-                var roomExists = await _context.ChatRooms.FirstOrDefaultAsync(cr => cr.Name.Equals(chatRoomName, StringComparison.CurrentCultureIgnoreCase));
+                var roomExists = await _context.ChatRooms.FirstOrDefaultAsync(cr => cr.Name.ToLower() == chatRoomName.ToLower());
 
                 if (roomExists == null)
                 {
