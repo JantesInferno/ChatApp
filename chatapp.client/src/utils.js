@@ -10,6 +10,7 @@ export const encryptMessage = (message) => {
 };
 
 export const decryptMessage = (message) => {
+    console.log(message);
     const encryptedBytes = CryptoJS.enc.Base64.parse(message);
     const iv = CryptoJS.lib.WordArray.create(encryptedBytes.words.slice(0, 4));
     const cipherText = CryptoJS.lib.WordArray.create(encryptedBytes.words.slice(4), encryptedBytes.sigBytes - 16);

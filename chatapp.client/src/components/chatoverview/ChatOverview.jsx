@@ -17,6 +17,7 @@ const ChatOverview = () => {
     const [userOnline, setUserOnline] = useState();
     const [hasJoinedRoom, setHasJoinedRoom] = useState(false);
 
+    const [dmMessages, setDmMessages] = useState([]);
     const [openDms, setOpenDms] = useState([]);
     const [toggledDms, setToggledDms] = useState([]);
 
@@ -106,6 +107,7 @@ const ChatOverview = () => {
                     connection.on("UserOnlineStatusUpdate", (user) => {
                         setUserOnline(JSON.parse(user));
                     });
+
                     connection.on("ReceiveData", (data) => {
                         const obj = JSON.parse(data);
 
@@ -200,6 +202,8 @@ const ChatOverview = () => {
                     setOpenDms={setOpenDms}
                     toggledDms={toggledDms}
                     setToggledDms={setToggledDms}
+                    dmMessages={dmMessages}
+                    setDmMessages={setDmMessages}
                 />
             )}
         </>

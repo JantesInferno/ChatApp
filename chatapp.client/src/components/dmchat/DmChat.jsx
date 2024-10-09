@@ -1,13 +1,20 @@
 /* eslint-disable react/prop-types */
 import { sanitizeHtml } from '../../utils.js';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import '../chatmessages/chatmessages.css';
 
 
-const DmChat = () => {
+const DmChat = ({ participant, dmMessages }) => {
 
     const [chatMessages, setChatMessages] = useState([]);
-    const [usersTyping, setUsersTyping] = useState([]);
+    //const [usersTyping, setUsersTyping] = useState([]);
+
+    useEffect(() => {
+        const thisUsername = sessionStorage.getItem('username');
+        console.log("dmMessages inside DmChat useEffect:", dmMessages)
+        const filteredMsgs = dmMessages.filter(msg => msg.Username !== participant.Username || msg.Username !== thisUsername);
+        setChatMessages(filteredMsgs);
+    }, [participant, dmMessages])
 
     return (
         <div className="chatbox-message-content">
@@ -36,31 +43,6 @@ const DmChat = () => {
                         </div>
                 }
             </div>
-
-            {
-                usersTyping.length > 0
-                    ?
-                    <div className="chatbox-typing-indicator">
-                        <div className="chatbox-message-typing">
-                            <div className="typing">
-                                <span></span>
-                                <span></span>
-                                <span></span>
-                            </div>
-                            {
-                                usersTyping.map((user, idx) => {
-                                    return (
-                                        <span key={user}>&nbsp;{user} {idx == usersTyping.length - 1 ? '' : ','}</span>
-                                    )
-                                })
-                            }
-                            <span>&nbsp;is typing...</span>
-                        </div>
-                    </div>
-                    :
-                    null
-            }
-
         </div>
     )
 }

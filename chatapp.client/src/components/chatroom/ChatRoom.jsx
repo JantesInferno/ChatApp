@@ -5,7 +5,7 @@ import { encryptMessage, decryptMessage, formatDay, sortUsers } from '../../util
 import ChatMessages from '../chatmessages/ChatMessages';
 import UserList from '../userlist/UserList';
 
-const ChatRoom = ({ connection, chatRoom, userOnline, openDms, setOpenDms, toggledDms, setToggledDms }) => {
+const ChatRoom = ({ connection, chatRoom, userOnline, openDms, setOpenDms, toggledDms, setToggledDms, dmMessages, setDmMessages}) => {
     const [chatMessages, setChatMessages] = useState([]);
     const [users, setUsers] = useState([]);
     const [newMessage, setNewMessage] = useState("");
@@ -170,6 +170,9 @@ const ChatRoom = ({ connection, chatRoom, userOnline, openDms, setOpenDms, toggl
                         setOpenDms={setOpenDms}
                         toggledDms={toggledDms}
                         setToggledDms={setToggledDms}
+                        connection={connection}
+                        dmMessages={dmMessages}
+                        setDmMessages={setDmMessages}
                     />
 
                     <button className="invite-link-button" onClick={() => navigator.clipboard.writeText(`${window.location.origin}/chat/${chatRoom.Id}`)}>

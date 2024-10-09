@@ -46,6 +46,7 @@ const SignIn = () => {
                 setPassword({ value: '' });
                 setUsername({ value: '' });
                 sessionStorage.setItem('token', res.token);
+                sessionStorage.setItem('username', res.username);
 
                 const queryParams = new URLSearchParams(location.search);
                 const redirectUrl = queryParams.get('redirect');

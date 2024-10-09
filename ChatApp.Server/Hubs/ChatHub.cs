@@ -254,6 +254,32 @@ namespace ChatApp.Server.Hubs
             }
         }
 
+        public async Task SendPrivateMessage(string message, string recipient)
+        {
+            try
+            {
+                string username = GetValidatedUsername();
+
+                ChatMessage chatMessage = new ChatMessage(username, message);
+
+                var json = JsonConvert.SerializeObject(chatMessage);
+
+                _logger.LogInformation($"User {username} sent private message: {message}");
+
+                await Clients.AllExcept(Context.ConnectionId).SendAsync($"ReceiveChatMessageOn_{recipient.ToLower()}", json);
+                await Clients.Client(Context.ConnectionId).SendAsync($"ReceiveChatMessageOn_{username}", json);
+            }
+            catch (HubException hubEx)
+            {
+                _logger.LogWarning(hubEx, $"Hub exception: {hubEx.Message}");
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error occurred.");
+            }
+        }
+
         // Sends typing indicator to other group members
         public async Task ActivateTypingIndicator(string chatRoomName)
         {
