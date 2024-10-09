@@ -2,6 +2,7 @@
 
 namespace ChatApp.Server.Domain.DTO
 {
+    // Response to client
     public class UserDTO
     {
 

@@ -16,6 +16,7 @@
 
         public DateTime DateTime { get; set; } = DateTime.Now;
 
+        // Formatted date for display on client
         public string ShortDate { get; set; } = DateTime.Now.ToString("yyyy/MM/dd HH:mm");
     }
 }

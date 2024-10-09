@@ -1,8 +1,8 @@
 ﻿using ChatApp.Server.Domain.Entities;
-using ChatApp.Server.Domain.Identity;
 
 namespace ChatApp.Server.Domain.DTO
 {
+    // Response to client
     public class ChatRoomDTO
     {
         public Guid Id { get; set; }

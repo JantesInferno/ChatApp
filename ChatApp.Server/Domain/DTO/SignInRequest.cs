@@ -2,6 +2,7 @@
 
 namespace ChatApp.Server.Domain.DTO
 {
+    // Request to server
     public class SignInRequest
     {
         [Required]

@@ -1,4 +1,4 @@
-/* eslint-disable react/prop-types */
+/* eslint-disable react-hooks/exhaustive-deps */
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { HubConnectionBuilder, LogLevel } from '@microsoft/signalr';
@@ -20,13 +20,14 @@ const ChatOverview = () => {
     const { chatRoomIdFromUrl } = useParams();
     const navigate = useNavigate();
 
-    // Handler to change the active chat room
+    // change the active chat room
     const handleChatRoomChange = async (chatRoomId) => {
         setActiveChatRoomId(chatRoomId);
         if (chatRoomId != activeChatRoomId)
             refreshChatRooms();
     };
 
+    // create new chatroom from CreateChatRoom component
     const createChatRoom = async (chatRoomName) => {
         console.log(chatRoomName);
 
@@ -37,10 +38,12 @@ const ChatOverview = () => {
             });
     }
 
+    // return users online
     const usersOnline = (chatRoom) => {
         return chatRoom.Users.filter(user => user.IsOnline == true);
     }
 
+    // invoke method on hub to join a chat room
     const joinChatRoom = async (chatRoomId) => {
         if (chatRoomId && !hasJoinedRoom) {
             await connection.invoke("JoinChatRoom", chatRoomId)
@@ -54,6 +57,7 @@ const ChatOverview = () => {
         }
     };
 
+    // update current chat room data
     const refreshChatRooms = async () => {
         if (connection) {
             await connection.invoke("FetchChatData")

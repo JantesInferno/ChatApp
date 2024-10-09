@@ -3,9 +3,6 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 
-// ******************************** TODO ********************************
-// Confirm password
-
 const SignUp = () => {
     const apiUrl = import.meta.env.VITE_REACT_API_URL;
 

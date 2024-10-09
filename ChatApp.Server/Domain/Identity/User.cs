@@ -1,6 +1,5 @@
 ﻿using ChatApp.Server.Domain.Entities;
 using Microsoft.AspNetCore.Identity;
-using System.ComponentModel.DataAnnotations;
 
 namespace ChatApp.Server.Domain.Identity
 {

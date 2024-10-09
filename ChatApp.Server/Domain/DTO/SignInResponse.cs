@@ -3,6 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace ChatApp.Server.Domain.DTO
 {
+    // Response to client
     public class SignInResponse
     {
 

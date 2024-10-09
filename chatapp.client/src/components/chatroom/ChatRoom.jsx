@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable react/prop-types */
 import './chatroom.css';
 import { useState, useEffect } from 'react';
@@ -140,6 +139,7 @@ const ChatRoom = ({ connection, chatRoom, userOnline }) => {
         }
     }, [chatRoom]);
 
+    // update list of users with newly signed in user
     useEffect(() => {
         if (userOnline) {
             setUsers((prevUsers) => {

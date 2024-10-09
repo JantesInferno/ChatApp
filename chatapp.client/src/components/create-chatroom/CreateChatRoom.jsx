@@ -8,10 +8,12 @@ const CreateChatRoom = ({ createChatRoom }) => {
 
     const popupRef = useRef(null);
 
+    // open/close popup
     const togglePopup = () => {
         setIsPopupOpen(!isPopupOpen);
     }
 
+    // submit and create a new chat room and clean up
     const handleChatRoomCreation = () => {
         if (chatRoomName.trim() === "") {
             return;
@@ -22,6 +24,7 @@ const CreateChatRoom = ({ createChatRoom }) => {
         setChatRoomName('');
     }
 
+    // submit if Enter key pressed
     const handleKeyPress = (e) => {
         if (e.key === 'Enter') {
             e.preventDefault();
@@ -29,6 +32,7 @@ const CreateChatRoom = ({ createChatRoom }) => {
         }
     }
 
+    // add an eventlistener to close the popup on outside mouse clicks
     useEffect(() => {
         if (isPopupOpen) {
             document.addEventListener('mousedown', (e) => {

@@ -10,13 +10,17 @@ namespace ChatApp.Server.Domain.Entities
             Name = name;
         }
 
+        public ChatRoom()
+        { 
+        }
+
         public Guid Id { get; set; } = Guid.NewGuid();
 
         public string Name { get; set; } = string.Empty;
 
         public virtual List<ChatMessage> ChatMessages { get; set; } = new List<ChatMessage> { };
 
-        // avoid infinite loop while serializing json
+        // avoid infinite loop when serializing json
         [JsonIgnore]
         public virtual List<User> Users { get; set; } = new List<User> { };
     }

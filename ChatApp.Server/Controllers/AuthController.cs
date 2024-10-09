@@ -38,7 +38,6 @@ namespace ChatApp.Server.Controllers
 
             if (result.Succeeded)
             {
-                //var user = await _userManager.FindByNameAsync(userDto.Username);
                 var user = await _userManager.Users.Include(x => x.ChatRooms)
                                                    .SingleAsync(x => x.UserName == userDto.Username);
 
@@ -100,7 +99,6 @@ namespace ChatApp.Server.Controllers
                 var claims = new[]
                 {
                     new Claim(JwtRegisteredClaimNames.Name, user.UserName!),
-                    new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
                 };
 
                 var token = new JwtSecurityToken(

@@ -8,24 +8,17 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
-using System;
 
 namespace ChatApp.Server.Hubs
 {
     [Authorize]
-    public class ChatHub : Hub
+    public class ChatHub(ChatAppDbContext context, ILogger<ChatHub> logger, IMapper mapper) : Hub
     {
-        private readonly ChatAppDbContext _context;
-        private readonly ILogger<ChatHub> _logger;
-        private readonly IMapper _mapper;
+        private readonly ChatAppDbContext _context = context;
+        private readonly ILogger<ChatHub> _logger = logger;
+        private readonly IMapper _mapper = mapper;
 
-        public ChatHub(ChatAppDbContext context, ILogger<ChatHub> logger, IMapper mapper)
-        {
-            _context = context;
-            _logger = logger;
-            _mapper = mapper;
-        }
-
+        // Check that user identity has been set
         private string GetValidatedUsername()
         {
             var username = Context.User?.Identity?.Name;
@@ -40,6 +33,7 @@ namespace ChatApp.Server.Hubs
             return username;
         }
 
+        // Updates users online status when connected/disconnected
         private async Task UpdateOnlineStatus(string username, bool online)
         {
             User user = await _context.Users.Include(u => u.ChatRooms)
@@ -160,7 +154,7 @@ namespace ChatApp.Server.Hubs
                 User user = await _context.Users.Include(u => u.ChatRooms)
                                                 .SingleAsync(u => u.UserName == username);
 
-                var roomExists = await _context.ChatRooms.FirstOrDefaultAsync(cr => cr.Name.ToLower() == chatRoomName.ToLower());
+                var roomExists = await _context.ChatRooms.FirstOrDefaultAsync(cr => cr.Name.Equals(chatRoomName, StringComparison.CurrentCultureIgnoreCase));
 
                 if (roomExists == null)
                 {
@@ -189,6 +183,7 @@ namespace ChatApp.Server.Hubs
             }
         }
 
+        // Sends updates on chat rooms to the client
         public async Task FetchChatData()
         {
             try
@@ -207,20 +202,8 @@ namespace ChatApp.Server.Hubs
 
                     chatRooms.ForEach(cr =>
                     {
-                        Groups.AddToGroupAsync(Context.ConnectionId, cr.Name);
-                    });
-
-                    chatRooms.ForEach(cr =>
-                    {
-                        //cr.ChatMessages.ForEach(cm =>
-                        //{
-                        //    if (!EncryptionUtil.IsBase64String(cm.Message))
-                        //    {
-                        //        cm.Message = EncryptionUtil.Encrypt(cm.Message);
-                        //    }
-                        //});
-
                         cr.ChatMessages = cr.ChatMessages.OrderBy(cm => cm.DateTime).ToList();
+                        Groups.AddToGroupAsync(Context.ConnectionId, cr.Name);
                     });
 
                     var chatRoomsJson = JsonConvert.SerializeObject(chatRooms);
@@ -271,6 +254,7 @@ namespace ChatApp.Server.Hubs
             }
         }
 
+        // Sends typing indicator to other group members
         public async Task ActivateTypingIndicator(string chatRoomName)
         {
             try
