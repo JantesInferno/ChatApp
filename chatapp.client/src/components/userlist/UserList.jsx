@@ -1,10 +1,10 @@
 /* eslint-disable react/prop-types */
+import { useEffect } from 'react';
 import DmChat from '../dmchat/DmChat';
 import './userlist.css';
 
 const UserList = ({ chatRoom, users, openDms, setOpenDms, toggledDms, setToggledDms }) => {
 
-    // open/close popup
     const handleDm = (user) => {
         setOpenDms((prev) => {
             const found = prev.find((u) => u.Username === user.Username);
@@ -22,17 +22,25 @@ const UserList = ({ chatRoom, users, openDms, setOpenDms, toggledDms, setToggled
         });
     }
 
-    // Toggle expanding the DM window for a specific user
     const handleToggleDm = (user) => {
         setToggledDms((prev) => {
             const isToggled = prev.includes(user.Username);
             if (isToggled) {
-                return prev.filter((u) => u !== user.Username);  // Remove user from toggled list
+                return prev.filter((u) => u !== user.Username);
             } else {
-                return [...prev, user.Username];  // Add user to toggled list
+                return [...prev, user.Username];
             }
         });
     };
+
+    useEffect(() => {
+        setOpenDms((prevOpenDms) => {
+            return prevOpenDms.map((dmUser) => {
+                const updatedUser = users.find((u) => u.Username === dmUser.Username);
+                return updatedUser ? { ...dmUser, IsOnline: updatedUser.IsOnline } : dmUser;
+            });
+        });
+    }, [users]);
 
     return (
         <>
@@ -90,7 +98,6 @@ const UserList = ({ chatRoom, users, openDms, setOpenDms, toggledDms, setToggled
                                     </button>
                                 </div>
 
-                                {/* Conditionally show more content when toggled */}
                                 {isToggled && (
                                     <div className="dm-expanded">
                                         <DmChat />
@@ -100,7 +107,6 @@ const UserList = ({ chatRoom, users, openDms, setOpenDms, toggledDms, setToggled
                                                 <button type="submit" className="chatroom-message-submit">Send</button>
                                             </form>
                                         </div>
-                                        {/* Add any other UI elements here */}
                                     </div>
                                 )}
                             </div>
