@@ -1,6 +1,6 @@
 ## Chat App Setup:
 
-### PS. Direct Messages functionality is in branch feature-dm
+### For Direct Messages functionality choose branch feature-dm else master
 
 ### 1. Clone the repo
 ### 2. Configure start up projects 
