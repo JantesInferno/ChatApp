@@ -7,11 +7,10 @@ import '../chatmessages/chatmessages.css';
 const DmChat = ({ participant, dmMessages }) => {
 
     const [chatMessages, setChatMessages] = useState([]);
-    //const [usersTyping, setUsersTyping] = useState([]);
 
     useEffect(() => {
         const thisUsername = sessionStorage.getItem('username');
-        console.log("dmMessages inside DmChat useEffect:", dmMessages)
+        // needs new data object with sender/receiver if multiple dm-sessions. messages from signed in user will bleed into other conversations
         const filteredMsgs = dmMessages.filter(msg => msg.Username !== participant.Username || msg.Username !== thisUsername);
         setChatMessages(filteredMsgs);
     }, [participant, dmMessages])

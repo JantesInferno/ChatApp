@@ -9,7 +9,6 @@ const UserList = ({ chatRoom, users, openDms, setOpenDms, toggledDms, setToggled
     const [newMessage, setNewMessage] = useState("");
 
     const handleDm = (user) => {
-        console.log("handleDm", user)
         if (user.Username !== sessionStorage.getItem('username') && user.IsOnline) {
             setOpenDms((prev) => {
                 const found = prev.find((u) => u.Username === user.Username);
@@ -45,8 +44,6 @@ const UserList = ({ chatRoom, users, openDms, setOpenDms, toggledDms, setToggled
             return;
         }
 
-        console.log("sendMessage", user)
-
         if (user.IsOnline) {
             let encryptedMessage;
 
@@ -69,7 +66,6 @@ const UserList = ({ chatRoom, users, openDms, setOpenDms, toggledDms, setToggled
 
     // handle form submit by clicking button
     const handleSubmit = (e, user) => {
-        console.log("handleSubmit", user);
         e.preventDefault();
         if (!user) alert("no user recipient");
         sendMessage(user);
@@ -77,7 +73,6 @@ const UserList = ({ chatRoom, users, openDms, setOpenDms, toggledDms, setToggled
 
     // handle form submit by pressing Enter
     const handleKeyPress = (e, user) => {
-        console.log("handleKeyPress", user);
         if (e.key === 'Enter') {
             e.preventDefault();
             sendMessage(user);
